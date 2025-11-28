@@ -10,7 +10,7 @@ on:
       skip_tests:
         description: 'Skip running tests'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 jobs:
