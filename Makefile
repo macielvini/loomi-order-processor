@@ -1,7 +1,7 @@
 APP_NAME=order_processor
 DOCKER_COMPOSE=docker compose
 
-.PHONY: test docker-tests build up down logs clean run-dev-local run-dev-docker stop-dev-docker deploy-local
+.PHONY: test docker-tests build up down logs clean run-local run-dev-docker stop-dev-docker deploy-local
 
 test:
 	mvn -B clean test
@@ -26,8 +26,8 @@ clean:
 	mvn -B clean
 	docker rmi $(APP_NAME):latest || true
 
-run-dev-local:
-	mvn -Dspring-boot.run.profiles=dev spring-boot:run
+run-local:
+	mvn -Dspring-boot.run.profiles=local spring-boot:run
 
 run-dev-docker:
 	docker run --rm -it \
