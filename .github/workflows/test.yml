@@ -5,6 +5,13 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip running tests'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   test:
@@ -28,5 +35,9 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       
       - name: Run tests
+        if: ${{ !inputs.skip_tests || github.event_name != 'workflow_dispatch' }}
         run: make test
-
+      
+      - name: Skip tests
+        if: ${{ inputs.skip_tests && github.event_name == 'workflow_dispatch' }}
+        run: echo "Tests skipped by user request"
