@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_processor
+    username: appuser
+    password: apppass
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
