@@ -5,7 +5,7 @@ import java.util.List;
 
 public record CreateOrder(
     String customerId,
-    List<OrderItem> items
+    List<CreateOrderItem> items
 ) {
     
 }
