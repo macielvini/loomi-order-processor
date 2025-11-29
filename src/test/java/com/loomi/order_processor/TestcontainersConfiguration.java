@@ -13,10 +13,7 @@ public class TestcontainersConfiguration {
 	@Bean
 	@ServiceConnection
 	KafkaContainer kafkaContainer() {
-		return new KafkaContainer(
-			DockerImageName.parse("confluentinc/cp-kafka:7.5.0")
-				.asCompatibleSubstituteFor("apache/kafka")
-		);
+		return new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0"));
 	}
 
 	@Bean
