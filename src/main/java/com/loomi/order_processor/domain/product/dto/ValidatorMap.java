@@ -9,7 +9,7 @@ import com.loomi.order_processor.domain.product.service.ProductValidator;
 public class ValidatorMap extends HashMap<ProductType, List<ProductValidator>> {
 
     public List<ProductValidator> getValidatorsFor(Product p) {
-        return get(p.productType());
+        return getOrDefault(p.productType(), List.of());
     }
     
 }
