@@ -16,5 +16,7 @@ public interface ProductRepository {
 
     List<Product> findAll(int limit);
 
+    List<Product> findAllById(List<UUID> ids);
+
     void update(Product product);
 }

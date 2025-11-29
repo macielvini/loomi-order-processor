@@ -40,6 +40,11 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public List<Product> findAllById(@NonNull List<UUID> ids) {
+        return jpaProductRepository.findAllById(ids);
+    }
+
+    @Override
     public void update(@NonNull Product product) {
         jpaProductRepository.save(product);
     }
