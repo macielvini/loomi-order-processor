@@ -9,11 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.core.KafkaAdmin;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
+import com.loomi.order_processor.TestcontainersConfiguration;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.entity.Product;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
@@ -21,12 +20,9 @@ import com.loomi.order_processor.domain.product.repository.ProductRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@Import(PostgresTestcontainersConfiguration.class)
+@Import(TestcontainersConfiguration.class)
 @Transactional
 class ProductRepositoryIntegrationTest {
-
-        @MockitoBean
-        private KafkaAdmin kafkaAdmin;
 
         @Autowired
         private ProductRepository productRepository;
