@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -45,13 +45,7 @@ public class Product {
 
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(columnDefinition = "jsonb")
-	private Map<String, Object> metadata;
+	private RawProductMetadata metadata;
 
-    <T> T metadataAs(Class<T> type) {
-        if (type.isInstance(this.metadata)) {
-            return type.cast(this.metadata);
-        }
-        throw new IllegalArgumentException("Metadata is not of type " + type.getName());
-    }
 }
 
