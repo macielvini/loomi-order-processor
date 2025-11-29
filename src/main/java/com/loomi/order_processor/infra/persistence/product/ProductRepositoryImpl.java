@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import com.loomi.order_processor.domain.product.entity.Product;
@@ -31,6 +32,11 @@ public class ProductRepositoryImpl implements ProductRepository {
     @Override
     public List<Product> findAll() {
         return jpaProductRepository.findAll();
+    }
+
+    @Override
+    public List<Product> findAll(int limit) {
+        return jpaProductRepository.findAll(PageRequest.of(0, limit)).getContent();
     }
 
     @Override
