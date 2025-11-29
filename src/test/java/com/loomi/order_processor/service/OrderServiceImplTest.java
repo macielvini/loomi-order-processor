@@ -1,6 +1,5 @@
 package com.loomi.order_processor.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.loomi.order_processor.app.service.OrderServiceImpl;
 import com.loomi.order_processor.domain.order.dto.CreateOrder;
-import com.loomi.order_processor.domain.order.dto.OrderItem;
+import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
@@ -81,15 +80,14 @@ public class OrderServiceImplTest {
             .build();
     }
 
-    private CreateOrder createTestCreateOrder(List<OrderItem> items) {
+    private CreateOrder createTestCreateOrder(List<CreateOrderItem> items) {
         return new CreateOrder("customer-123", items);
     }
 
-    private OrderItem createTestOrderItem(UUID productId, int quantity, BigDecimal price) {
-        return OrderItem.builder()
+    private CreateOrderItem createTestOrderItem(UUID productId, int quantity) {
+        return CreateOrderItem.builder()
             .productId(productId)
             .quantity(quantity)
-            .price(price)
             .metadata(new RawProductMetadata())
             .build();
     }
@@ -123,7 +121,7 @@ public class OrderServiceImplTest {
     @Test
     void shouldThrowProductValidationException_whenValidationFails() {
         CreateOrder createOrder = createTestCreateOrder(List.of(
-            createTestOrderItem(testProductId, 2, BigDecimal.valueOf(10.00))
+            createTestOrderItem(testProductId, 2)
         ));
 
         Product product = createTestProduct(testProductId, ProductType.PHYSICAL);
@@ -143,8 +141,8 @@ public class OrderServiceImplTest {
         UUID productId2 = UUID.randomUUID();
 
         CreateOrder createOrder = createTestCreateOrder(List.of(
-            createTestOrderItem(productId1, 1, BigDecimal.valueOf(20.00)),
-            createTestOrderItem(productId2, 3, BigDecimal.valueOf(15.00))
+            createTestOrderItem(productId1, 1),
+            createTestOrderItem(productId2, 3)
         ));
 
         Product product1 = createTestProduct(productId1, ProductType.SUBSCRIPTION);
@@ -166,16 +164,21 @@ public class OrderServiceImplTest {
     @Test
     void shouldCompleteSuccessfully_whenValidationPasses() {
         CreateOrder createOrder = createTestCreateOrder(List.of(
-            createTestOrderItem(testProductId, 1, BigDecimal.valueOf(25.00))
+            createTestOrderItem(testProductId, 1)
         ));
 
         Product product = createTestProduct(testProductId, ProductType.PHYSICAL);
         ProductValidator validator = createMockValidator(ValidationResult.ok());
+        Order savedOrder = createTestOrder(testOrderId, "customer-123");
 
         when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
+        when(productRepository.findAllById(List.of(testProductId))).thenReturn(List.of(product));
         when(validatorMap.getValidatorsFor(product)).thenReturn(List.of(validator));
+        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
-        assertDoesNotThrow(() -> orderService.createOrder(createOrder));
+        UUID result = orderService.createOrder(createOrder);
+
+        assertEquals(testOrderId, result);
     }
 
     @Test
@@ -184,8 +187,8 @@ public class OrderServiceImplTest {
         UUID productId2 = UUID.randomUUID();
 
         CreateOrder createOrder = createTestCreateOrder(List.of(
-            createTestOrderItem(productId1, 1, BigDecimal.valueOf(10.00)),
-            createTestOrderItem(productId2, 2, BigDecimal.valueOf(20.00))
+            createTestOrderItem(productId1, 1),
+            createTestOrderItem(productId2, 2)
         ));
 
         Product product1 = createTestProduct(productId1, ProductType.PHYSICAL);
@@ -193,14 +196,18 @@ public class OrderServiceImplTest {
 
         ProductValidator validator1 = createMockValidator(ValidationResult.ok());
         ProductValidator validator2 = createMockValidator(ValidationResult.ok());
+        Order savedOrder = createTestOrder(testOrderId, "customer-123");
 
         when(productRepository.findById(productId1)).thenReturn(Optional.of(product1));
         when(productRepository.findById(productId2)).thenReturn(Optional.of(product2));
+        when(productRepository.findAllById(List.of(productId1, productId2))).thenReturn(List.of(product1, product2));
         when(validatorMap.getValidatorsFor(product1)).thenReturn(List.of(validator1));
         when(validatorMap.getValidatorsFor(product2)).thenReturn(List.of(validator2));
+        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
-        assertDoesNotThrow(() -> orderService.createOrder(createOrder));
+        UUID result = orderService.createOrder(createOrder);
 
+        assertEquals(testOrderId, result);
         verify(validator1, times(1)).validate(product1);
         verify(validator2, times(1)).validate(product2);
         
@@ -214,7 +221,7 @@ public class OrderServiceImplTest {
     @Test
     void shouldThrowProductNotFoundException_whenProductNotFound() {
         CreateOrder createOrder = createTestCreateOrder(List.of(
-            createTestOrderItem(testProductId, 1, BigDecimal.valueOf(25.00))
+            createTestOrderItem(testProductId, 1)
         ));
 
         assertThrows(ProductNotFoundException.class, () -> {
