@@ -23,8 +23,6 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
-    volumes:
-      - kafka_data:/var/lib/kafka/data
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -46,14 +44,21 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d order_processor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
     env_file:
       - .env
     depends_on:
-      - postgres
-      - kafka
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
     ports:
       - "8080:8080"
 
@@ -74,4 +79,3 @@ services:
 volumes:
   postgres_data:
   m2-repo:
-  kafka_data:
