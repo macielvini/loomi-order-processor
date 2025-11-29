@@ -3,10 +3,13 @@ package com.loomi.order_processor.app.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.app.utils.JsonUtils;
 import com.loomi.order_processor.domain.order.dto.CreateOrder;
+import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
@@ -49,16 +52,35 @@ public class OrderServiceImpl implements OrderService {
             throw new ProductValidationException(JsonUtils.toJson(validationErrors));
         }
 
+        var orderItems = getOrderItemsSnapshot(createOrder.items());
+
         var order = Order.builder()
                 .customerId(createOrder.customerId())
-                .items(createOrder.items())
+                .items(orderItems)
                 .build();
 
         var savedOrder = orderRepository.save(order);
         return savedOrder.id();
     }
 
-    private List<ValidationResult> validateOrderItem(OrderItem item) {
+    private List<OrderItem> getOrderItemsSnapshot(List<CreateOrderItem> items) {
+        var ids = items.stream().map(i -> i.productId()).collect(Collectors.toList());
+        var products = productRepository.findAllById(ids);
+
+        var itemMap = items.stream()
+                .collect(Collectors.toMap(
+                        CreateOrderItem::productId,
+                        i -> i));
+
+        return products.stream()
+                .map(p -> {
+                    var item = itemMap.get(p.id());
+                    return OrderItem.fromProduct(p, item.quantity(), item.metadata());
+                })
+                .collect(Collectors.toList());
+    }
+
+    private List<ValidationResult> validateOrderItem(CreateOrderItem item) {
         var product = productRepository
                 .findById(item.productId())
                 .orElseThrow(() -> new ProductNotFoundException(item.productId()));
