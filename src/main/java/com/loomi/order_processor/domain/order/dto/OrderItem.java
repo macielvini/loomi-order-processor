@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,9 +21,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class OrderItem {
+    @NotNull
     private UUID productId;
+    
+    @Min(1)
     private int quantity;
+    
+    @NotNull
+    @Positive
     private BigDecimal price;
+    
     private RawProductMetadata metadata;
 
     public BigDecimal getTotalPrice() {
