@@ -1,6 +1,7 @@
 package com.loomi.order_processor.domain.product.entity;
 
 import jakarta.persistence.*;
+import lombok.experimental.Accessors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Accessors(fluent = true, chain = true)
 public class Product {
 
 	@Id
