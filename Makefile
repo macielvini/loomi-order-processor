@@ -7,7 +7,7 @@ test:
 	mvn -B clean test
 
 docker-tests:
-	$(DOCKER_COMPOSE) --profile test up tests
+	$(DOCKER_COMPOSE) --profile test run --rm tests
 
 build:
 	mvn -B -DskipTests package
