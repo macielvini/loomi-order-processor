@@ -7,9 +7,11 @@ import org.springframework.http.HttpStatus;
 
 import com.loomi.order_processor.app.utils.JsonUtils;
 
+import lombok.experimental.Accessors;
 import lombok.Getter;
 
 @Getter
+@Accessors(fluent = true, chain = true)
 public class HttpException extends RuntimeException {
 
     private final HttpStatus status;

@@ -12,6 +12,7 @@ import com.loomi.order_processor.domain.product.entity.Product;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.experimental.Accessors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Accessors(fluent = true, chain = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class OrderItem {
     @NotNull
