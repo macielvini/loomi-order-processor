@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
+import com.loomi.order_processor.domain.product.entity.Product;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -35,5 +36,14 @@ public class OrderItem {
 
     public BigDecimal getTotalPrice() {
         return price.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    public static OrderItem fromProduct(Product product, Integer quantity, RawProductMetadata metadata) {
+        return OrderItem.builder()
+            .productId(product.id())
+            .quantity(quantity)
+            .price(product.price())
+            .metadata(metadata)
+            .build();
     }
 }
