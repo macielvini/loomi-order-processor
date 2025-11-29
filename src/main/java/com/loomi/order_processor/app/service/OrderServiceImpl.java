@@ -70,18 +70,21 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private List<OrderItem> getOrderItemsSnapshot(List<CreateOrderItem> items) {
-        var ids = items.stream().map(i -> i.productId()).collect(Collectors.toList());
-        var products = productRepository.findAllById(ids);
+        var uniqueIds = items.stream()
+                .map(CreateOrderItem::productId)
+                .distinct()
+                .collect(Collectors.toList());
+        var products = productRepository.findAllById(uniqueIds);
 
-        var itemMap = items.stream()
+        var productMap = products.stream()
                 .collect(Collectors.toMap(
-                        CreateOrderItem::productId,
-                        i -> i));
+                        p -> p.id(),
+                        p -> p));
 
-        return products.stream()
-                .map(p -> {
-                    var item = itemMap.get(p.id());
-                    return OrderItem.fromProduct(p, item.quantity(), item.metadata());
+        return items.stream()
+                .map(item -> {
+                    var product = productMap.get(item.productId());
+                    return OrderItem.fromProduct(product, item.quantity(), item.metadata());
                 })
                 .collect(Collectors.toList());
     }
