@@ -232,4 +232,92 @@ class ProductRepositoryIntegrationTest {
         assertThat(updatedProduct.metadata().get("version")).isEqualTo(2);
         assertThat(updatedProduct.metadata().get("original")).isNull();
     }
+
+    @Test
+    void shouldFindAllProductsById_whenProductsExist() {
+        Product product1 = Product.builder()
+                .name("Product 1")
+                .productType(ProductType.PHYSICAL)
+                .price(new BigDecimal("10.00"))
+                .stockQuantity(10)
+                .isActive(true)
+                .build();
+
+        Product product2 = Product.builder()
+                .name("Product 2")
+                .productType(ProductType.DIGITAL)
+                .price(new BigDecimal("20.00"))
+                .stockQuantity(20)
+                .isActive(true)
+                .build();
+
+        Product product3 = Product.builder()
+                .name("Product 3")
+                .productType(ProductType.SUBSCRIPTION)
+                .price(new BigDecimal("30.00"))
+                .stockQuantity(30)
+                .isActive(false)
+                .build();
+
+        Product savedProduct1 = productRepository.save(product1);
+        Product savedProduct2 = productRepository.save(product2);
+        Product savedProduct3 = productRepository.save(product3);
+
+        List<Product> foundProducts = productRepository.findAllById(
+                List.of(savedProduct1.id(), savedProduct2.id(), savedProduct3.id()));
+
+        assertThat(foundProducts).hasSize(3);
+        assertThat(foundProducts).extracting(Product::id)
+                .containsExactlyInAnyOrder(savedProduct1.id(), savedProduct2.id(), savedProduct3.id());
+        assertThat(foundProducts).extracting(Product::name)
+                .containsExactlyInAnyOrder("Product 1", "Product 2", "Product 3");
+    }
+
+    @Test
+    void shouldFindOnlyExistingProducts_whenSomeIdsDoNotExist() {
+        Product product1 = Product.builder()
+                .name("Product 1")
+                .productType(ProductType.PHYSICAL)
+                .price(new BigDecimal("10.00"))
+                .stockQuantity(10)
+                .isActive(true)
+                .build();
+
+        Product product2 = Product.builder()
+                .name("Product 2")
+                .productType(ProductType.DIGITAL)
+                .price(new BigDecimal("20.00"))
+                .stockQuantity(20)
+                .isActive(true)
+                .build();
+
+        Product savedProduct1 = productRepository.save(product1);
+        Product savedProduct2 = productRepository.save(product2);
+        UUID nonExistentId = UUID.randomUUID();
+
+        List<Product> foundProducts = productRepository.findAllById(
+                List.of(savedProduct1.id(), savedProduct2.id(), nonExistentId));
+
+        assertThat(foundProducts).hasSize(2);
+        assertThat(foundProducts).extracting(Product::id)
+                .containsExactlyInAnyOrder(savedProduct1.id(), savedProduct2.id());
+    }
+
+    @Test
+    void shouldReturnEmptyList_whenNoIdsMatch() {
+        UUID nonExistentId1 = UUID.randomUUID();
+        UUID nonExistentId2 = UUID.randomUUID();
+
+        List<Product> foundProducts = productRepository.findAllById(
+                List.of(nonExistentId1, nonExistentId2));
+
+        assertThat(foundProducts).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyList_whenEmptyIdListProvided() {
+        List<Product> foundProducts = productRepository.findAllById(List.of());
+
+        assertThat(foundProducts).isEmpty();
+    }
 }
