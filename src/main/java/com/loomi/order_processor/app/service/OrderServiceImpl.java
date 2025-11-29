@@ -35,7 +35,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public void createOrder(CreateOrder createOrder) {
+    public UUID createOrder(CreateOrder createOrder) {
         var validationErrors = new ArrayList<ValidationResult>();
 
         for (var item : createOrder.items()) {
@@ -49,7 +49,13 @@ public class OrderServiceImpl implements OrderService {
             throw new ProductValidationException(JsonUtils.toJson(validationErrors));
         }
 
-        return;
+        var order = Order.builder()
+                .customerId(createOrder.customerId())
+                .items(createOrder.items())
+                .build();
+
+        var savedOrder = orderRepository.save(order);
+        return savedOrder.id();
     }
 
     private List<ValidationResult> validateOrderItem(OrderItem item) {

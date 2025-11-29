@@ -9,5 +9,5 @@ public interface OrderService {
      
     Order consultOrder(UUID orderId);
 
-    void createOrder(CreateOrder createOrder);
+    UUID createOrder(CreateOrder createOrder);
 }
