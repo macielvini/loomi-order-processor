@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.entity.Product;
 
@@ -27,6 +28,9 @@ public class OrderItem {
     
     @Min(1)
     private int quantity;
+
+    @NotNull
+    private ProductType productType;
     
     @NotNull
     @Positive
@@ -42,6 +46,7 @@ public class OrderItem {
         return OrderItem.builder()
             .productId(product.id())
             .quantity(quantity)
+            .productType(product.productType())
             .price(product.price())
             .metadata(metadata)
             .build();
