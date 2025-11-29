@@ -8,6 +8,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.mockito.ArgumentCaptor;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -227,5 +229,85 @@ public class OrderServiceImplTest {
         assertThrows(ProductNotFoundException.class, () -> {
             orderService.createOrder(createOrder);
         });
+    }
+
+    @Test
+    void shouldCalculateTotalAmount_whenCreatingOrder() {
+        UUID productId1 = UUID.randomUUID();
+        UUID productId2 = UUID.randomUUID();
+        UUID productId3 = UUID.randomUUID();
+
+        BigDecimal price1 = new BigDecimal("10.50");
+        BigDecimal price2 = new BigDecimal("25.00");
+        BigDecimal price3 = new BigDecimal("5.75");
+
+        int quantity1 = 2;
+        int quantity2 = 1;
+        int quantity3 = 3;
+
+        CreateOrder createOrder = createTestCreateOrder(List.of(
+            createTestOrderItem(productId1, quantity1),
+            createTestOrderItem(productId2, quantity2),
+            createTestOrderItem(productId3, quantity3)
+        ));
+
+        Product product1 = Product.builder()
+            .id(productId1)
+            .name("Product 1")
+            .productType(ProductType.PHYSICAL)
+            .price(price1)
+            .stockQuantity(100)
+            .isActive(true)
+            .metadata(new RawProductMetadata())
+            .build();
+
+        Product product2 = Product.builder()
+            .id(productId2)
+            .name("Product 2")
+            .productType(ProductType.DIGITAL)
+            .price(price2)
+            .stockQuantity(50)
+            .isActive(true)
+            .metadata(new RawProductMetadata())
+            .build();
+
+        Product product3 = Product.builder()
+            .id(productId3)
+            .name("Product 3")
+            .productType(ProductType.SUBSCRIPTION)
+            .price(price3)
+            .stockQuantity(200)
+            .isActive(true)
+            .metadata(new RawProductMetadata())
+            .build();
+
+        ProductValidator validator1 = createMockValidator(ValidationResult.ok());
+        ProductValidator validator2 = createMockValidator(ValidationResult.ok());
+        ProductValidator validator3 = createMockValidator(ValidationResult.ok());
+
+        BigDecimal expectedTotal = price1.multiply(BigDecimal.valueOf(quantity1))
+            .add(price2.multiply(BigDecimal.valueOf(quantity2)))
+            .add(price3.multiply(BigDecimal.valueOf(quantity3)));
+
+        when(productRepository.findById(productId1)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(productId2)).thenReturn(Optional.of(product2));
+        when(productRepository.findById(productId3)).thenReturn(Optional.of(product3));
+        when(productRepository.findAllById(List.of(productId1, productId2, productId3)))
+            .thenReturn(List.of(product1, product2, product3));
+        when(validatorMap.getValidatorsFor(product1)).thenReturn(List.of(validator1));
+        when(validatorMap.getValidatorsFor(product2)).thenReturn(List.of(validator2));
+        when(validatorMap.getValidatorsFor(product3)).thenReturn(List.of(validator3));
+
+        Order savedOrder = createTestOrder(testOrderId, "customer-123");
+        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+
+        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+
+        UUID result = orderService.createOrder(createOrder);
+
+        assertEquals(testOrderId, result);
+        verify(orderRepository).save(orderCaptor.capture());
+        Order capturedOrder = orderCaptor.getValue();
+        assertEquals(expectedTotal, capturedOrder.totalAmount());
     }
 }
