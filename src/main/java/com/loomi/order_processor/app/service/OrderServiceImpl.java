@@ -1,5 +1,6 @@
 package com.loomi.order_processor.app.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,9 +55,14 @@ public class OrderServiceImpl implements OrderService {
 
         var orderItems = getOrderItemsSnapshot(createOrder.items());
 
+        var totalAmount = orderItems.stream()
+                .map(OrderItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         var order = Order.builder()
                 .customerId(createOrder.customerId())
                 .items(orderItems)
+                .totalAmount(totalAmount)
                 .build();
 
         var savedOrder = orderRepository.save(order);
