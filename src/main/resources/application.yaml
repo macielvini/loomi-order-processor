@@ -10,7 +10,7 @@ spring:
       ddl-auto: validate
     show-sql: false
   kafka:
-    bootstrap-servers: 
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:} 
     consumer:
       group-id: order-processor-group
       auto-offset-reset: earliest
