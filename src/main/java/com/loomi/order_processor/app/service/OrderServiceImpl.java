@@ -3,11 +3,8 @@ package com.loomi.order_processor.app.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loomi.order_processor.app.utils.JsonUtils;
 import com.loomi.order_processor.domain.order.dto.CreateOrder;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
@@ -18,6 +15,7 @@ import com.loomi.order_processor.domain.order.service.OrderService;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 import com.loomi.order_processor.domain.product.dto.ValidatorMap;
 import com.loomi.order_processor.domain.product.exception.ProductValidationException;
+import com.loomi.order_processor.domain.product.exception.ProductNotFoundException;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -33,41 +31,43 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order consultOrder(UUID orderId) {
         return orderRepository.findById(orderId)
-            .orElseThrow(() -> new OrderNotFoundException(orderId));
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
     }
 
     @Override
     public void createOrder(CreateOrder createOrder) {
         var validationErrors = new ArrayList<ValidationResult>();
 
-        for(var item : createOrder.items()) {
+        for (var item : createOrder.items()) {
             var results = validateOrderItem(item);
-            if(!results.isEmpty()) {
+            if (!results.isEmpty()) {
                 validationErrors.addAll(results);
             }
         }
 
-        if(!validationErrors.isEmpty()) {
+        if (!validationErrors.isEmpty()) {
             throw new ProductValidationException(JsonUtils.toJson(validationErrors));
         }
 
-        throw new UnsupportedOperationException("Unfinished method 'createOrder'");
+        return;
     }
 
     private List<ValidationResult> validateOrderItem(OrderItem item) {
-        var product = productRepository.findById(item.productId()).orElseThrow();
+        var product = productRepository
+                .findById(item.productId())
+                .orElseThrow(() -> new ProductNotFoundException(item.productId()));
         var productValidators = validatorMap.getValidatorsFor(product);
 
         List<ValidationResult> results = new ArrayList<>();
 
-        for(var validator : productValidators) {
+        for (var validator : productValidators) {
             var result = validator.validate(product);
-            if(!result.isValid()) {
+            if (!result.isValid()) {
                 results.add(result);
             }
         }
 
         return results;
-    } 
+    }
 
 }
