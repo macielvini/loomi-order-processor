@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,15 +27,12 @@ import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
+import com.loomi.order_processor.domain.exception.HttpException;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
-import com.loomi.order_processor.domain.product.dto.ValidationResult;
-import com.loomi.order_processor.domain.product.dto.ValidatorMap;
 import com.loomi.order_processor.domain.product.entity.Product;
-import com.loomi.order_processor.domain.product.exception.ProductNotFoundException;
-import com.loomi.order_processor.domain.product.exception.ProductValidationException;
+import com.loomi.order_processor.domain.product.exception.ProductIsNotActiveException;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
-import com.loomi.order_processor.domain.product.service.ProductValidator;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceImplTest {
@@ -46,9 +42,6 @@ public class OrderServiceImplTest {
 
     @Mock
     private ProductRepository productRepository;
-
-    @Mock
-    private ValidatorMap validatorMap;
 
     @InjectMocks
     private OrderServiceImpl orderService;
@@ -94,13 +87,6 @@ public class OrderServiceImplTest {
             .build();
     }
 
-    private ProductValidator createMockValidator(ValidationResult result) {
-        ProductValidator validator = org.mockito.Mockito.mock(ProductValidator.class);
-        when(validator.validate(any(Product.class))).thenReturn(result);
-        return validator;
-    }
-
-
     @Test
     void shouldReturnOrder_whenOrderExists() {
         Order expectedOrder = createTestOrder(testOrderId, "customer-123");
@@ -121,24 +107,30 @@ public class OrderServiceImplTest {
     }
 
     @Test
-    void shouldThrowProductValidationException_whenValidationFails() {
+    void shouldThrowProductIsNotActiveException_whenProductIsInactive() {
         CreateOrder createOrder = createTestCreateOrder(List.of(
             createTestOrderItem(testProductId, 2)
         ));
 
-        Product product = createTestProduct(testProductId, ProductType.PHYSICAL);
-        ProductValidator validator = createMockValidator(ValidationResult.fail("Product out of stock"));
+        Product product = Product.builder()
+            .id(testProductId)
+            .name("Test Product")
+            .productType(ProductType.PHYSICAL)
+            .price(BigDecimal.valueOf(10.00))
+            .stockQuantity(100)
+            .isActive(false)
+            .metadata(new RawProductMetadata())
+            .build();
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
-        when(validatorMap.getValidatorsFor(product)).thenReturn(List.of(validator));
+        when(productRepository.findAllById(List.of(testProductId))).thenReturn(List.of(product));
 
-        assertThrows(ProductValidationException.class, () -> {
+        assertThrows(ProductIsNotActiveException.class, () -> {
             orderService.createOrder(createOrder);
         });
     }
 
     @Test
-    void shouldThrowProductValidationException_whenMultipleItemsHaveValidationErrors() {
+    void shouldThrowProductIsNotActiveException_whenMultipleItemsHaveInactiveProducts() {
         UUID productId1 = UUID.randomUUID();
         UUID productId2 = UUID.randomUUID();
 
@@ -147,44 +139,43 @@ public class OrderServiceImplTest {
             createTestOrderItem(productId2, 3)
         ));
 
-        Product product1 = createTestProduct(productId1, ProductType.SUBSCRIPTION);
+        Product product1 = Product.builder()
+            .id(productId1)
+            .name("Test Product")
+            .productType(ProductType.SUBSCRIPTION)
+            .price(BigDecimal.valueOf(10.00))
+            .stockQuantity(100)
+            .isActive(false)
+            .metadata(new RawProductMetadata())
+            .build();
         Product product2 = createTestProduct(productId2, ProductType.DIGITAL);
 
-        ProductValidator validator1 = createMockValidator(ValidationResult.fail("Invalid subscription period"));
-        ProductValidator validator2 = createMockValidator(ValidationResult.fail("License expired"));
+        when(productRepository.findAllById(List.of(productId1, productId2))).thenReturn(List.of(product1, product2));
 
-        when(productRepository.findById(productId1)).thenReturn(Optional.of(product1));
-        when(productRepository.findById(productId2)).thenReturn(Optional.of(product2));
-        when(validatorMap.getValidatorsFor(product1)).thenReturn(List.of(validator1));
-        when(validatorMap.getValidatorsFor(product2)).thenReturn(List.of(validator2));
-
-        assertThrows(ProductValidationException.class, () -> {
+        assertThrows(ProductIsNotActiveException.class, () -> {
             orderService.createOrder(createOrder);
         });
     }
 
     @Test
-    void shouldCompleteSuccessfully_whenValidationPasses() {
+    void shouldCompleteSuccessfully_whenOrderIsCreated() {
         CreateOrder createOrder = createTestCreateOrder(List.of(
             createTestOrderItem(testProductId, 1)
         ));
 
         Product product = createTestProduct(testProductId, ProductType.PHYSICAL);
-        ProductValidator validator = createMockValidator(ValidationResult.ok());
         Order savedOrder = createTestOrder(testOrderId, "customer-123");
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
         when(productRepository.findAllById(List.of(testProductId))).thenReturn(List.of(product));
-        when(validatorMap.getValidatorsFor(product)).thenReturn(List.of(validator));
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
-        UUID result = orderService.createOrder(createOrder);
+        Order result = orderService.createOrder(createOrder);
 
-        assertEquals(testOrderId, result);
+        assertEquals(testOrderId, result.id());
     }
 
     @Test
-    void shouldValidateAllItems_whenCreatingOrder() {
+    void shouldCheckAllProductsAreActive_whenCreatingOrder() {
         UUID productId1 = UUID.randomUUID();
         UUID productId2 = UUID.randomUUID();
 
@@ -195,38 +186,27 @@ public class OrderServiceImplTest {
 
         Product product1 = createTestProduct(productId1, ProductType.PHYSICAL);
         Product product2 = createTestProduct(productId2, ProductType.DIGITAL);
-
-        ProductValidator validator1 = createMockValidator(ValidationResult.ok());
-        ProductValidator validator2 = createMockValidator(ValidationResult.ok());
         Order savedOrder = createTestOrder(testOrderId, "customer-123");
 
-        when(productRepository.findById(productId1)).thenReturn(Optional.of(product1));
-        when(productRepository.findById(productId2)).thenReturn(Optional.of(product2));
         when(productRepository.findAllById(List.of(productId1, productId2))).thenReturn(List.of(product1, product2));
-        when(validatorMap.getValidatorsFor(product1)).thenReturn(List.of(validator1));
-        when(validatorMap.getValidatorsFor(product2)).thenReturn(List.of(validator2));
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
-        UUID result = orderService.createOrder(createOrder);
+        Order result = orderService.createOrder(createOrder);
 
-        assertEquals(testOrderId, result);
-        verify(validator1, times(1)).validate(product1);
-        verify(validator2, times(1)).validate(product2);
-        
-        ValidationResult result1 = validator1.validate(product1);
-        ValidationResult result2 = validator2.validate(product2);
-        
-        assertTrue(result1.isValid(), "Validator 1 should return valid result");
-        assertTrue(result2.isValid(), "Validator 2 should return valid result");
+        assertEquals(testOrderId, result.id());
+        assertTrue(product1.isActive(), "Product 1 should be active");
+        assertTrue(product2.isActive(), "Product 2 should be active");
     }
 
     @Test
-    void shouldThrowProductNotFoundException_whenProductNotFound() {
+    void shouldThrowHttpException_whenNoProductsFound() {
         CreateOrder createOrder = createTestCreateOrder(List.of(
             createTestOrderItem(testProductId, 1)
         ));
 
-        assertThrows(ProductNotFoundException.class, () -> {
+        when(productRepository.findAllById(List.of(testProductId))).thenReturn(List.of());
+
+        assertThrows(HttpException.class, () -> {
             orderService.createOrder(createOrder);
         });
     }
@@ -281,31 +261,21 @@ public class OrderServiceImplTest {
             .metadata(new RawProductMetadata())
             .build();
 
-        ProductValidator validator1 = createMockValidator(ValidationResult.ok());
-        ProductValidator validator2 = createMockValidator(ValidationResult.ok());
-        ProductValidator validator3 = createMockValidator(ValidationResult.ok());
-
         BigDecimal expectedTotal = price1.multiply(BigDecimal.valueOf(quantity1))
             .add(price2.multiply(BigDecimal.valueOf(quantity2)))
             .add(price3.multiply(BigDecimal.valueOf(quantity3)));
 
-        when(productRepository.findById(productId1)).thenReturn(Optional.of(product1));
-        when(productRepository.findById(productId2)).thenReturn(Optional.of(product2));
-        when(productRepository.findById(productId3)).thenReturn(Optional.of(product3));
         when(productRepository.findAllById(List.of(productId1, productId2, productId3)))
             .thenReturn(List.of(product1, product2, product3));
-        when(validatorMap.getValidatorsFor(product1)).thenReturn(List.of(validator1));
-        when(validatorMap.getValidatorsFor(product2)).thenReturn(List.of(validator2));
-        when(validatorMap.getValidatorsFor(product3)).thenReturn(List.of(validator3));
 
         Order savedOrder = createTestOrder(testOrderId, "customer-123");
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
         ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
 
-        UUID result = orderService.createOrder(createOrder);
+        Order result = orderService.createOrder(createOrder);
 
-        assertEquals(testOrderId, result);
+        assertEquals(testOrderId, result.id());
         verify(orderRepository).save(orderCaptor.capture());
         Order capturedOrder = orderCaptor.getValue();
         assertEquals(expectedTotal, capturedOrder.totalAmount());
