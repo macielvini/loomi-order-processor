@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 @ItemHandlerFor(value = ProductType.PHYSICAL)
-public class IsAvailableValidator implements OrderItemValidator {
+public class StockHandler implements OrderItemValidator {
 
     private final ProductRepository productRepository;
 
