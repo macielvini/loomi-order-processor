@@ -14,7 +14,9 @@ import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
+import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.service.OrderService;
 import com.loomi.order_processor.domain.product.exception.ProductIsNotActiveException;
@@ -29,6 +31,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final OrderProducer orderProducer;
 
     @Override
     public Order consultOrder(UUID orderId) {
@@ -72,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
             .build();
         var savedOrder = orderRepository.save(order);
 
-        // TODO: public event `OrderCreated` to Kafka
+        orderProducer.sendOrderCreatedEvent(new OrderCreatedEvent(savedOrder));
         return savedOrder;
     }
 }
