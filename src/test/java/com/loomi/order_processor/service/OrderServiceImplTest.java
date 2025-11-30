@@ -26,6 +26,7 @@ import com.loomi.order_processor.domain.order.dto.CreateOrder;
 import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
+import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.exception.HttpException;
 import com.loomi.order_processor.domain.product.dto.ProductType;
@@ -42,6 +43,9 @@ public class OrderServiceImplTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private OrderProducer orderProducer;
 
     @InjectMocks
     private OrderServiceImpl orderService;

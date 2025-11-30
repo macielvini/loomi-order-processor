@@ -32,8 +32,8 @@ public class OrderController {
     }
 
     @PostMapping
-    ResponseEntity<?> createOrder(@RequestBody @Valid CreateOrderRequest request) {
-        var createOrder = new CreateOrder(request.customerId(), request.items());
+    ResponseEntity<?> createOrder(@RequestBody @Valid CreateOrderRequest body) {
+        var createOrder = new CreateOrder(body.customerId(), body.items());
         var order = orderService.createOrder(createOrder);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .location(URI.create("/api/orders/" + order.id()))

@@ -34,7 +34,7 @@ public class ControllerExceptionHandler {
         e.getBindingResult().getFieldErrors().forEach(err -> {
             String message = messageSource.getMessage(err, LocaleContextHolder.getLocale());
 
-            InvalidPropertyDto error = new InvalidPropertyDto(message, err.getField());
+            InvalidPropertyDto error = new InvalidPropertyDto(err.getField(), message);
             dto.add(error);
         });
 
