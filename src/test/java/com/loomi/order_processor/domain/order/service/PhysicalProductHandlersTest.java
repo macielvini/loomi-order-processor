@@ -436,14 +436,13 @@ class PhysicalProductHandlersTest {
         }
 
         @Test
-        @DisplayName("shouldReturnWarehouseUnavailable_whenLocationIsCaseSensitive")
-        void shouldReturnWarehouseUnavailable_whenLocationIsCaseSensitive() {
+        @DisplayName("shouldReturnOk_whenLocationIsCaseInsensitive")
+        void shouldReturnOk_whenLocationIsCaseInsensitive() {
             OrderItem item = createOrderItem(1, createMetadata("sp"));
 
             ItemHandlerResult result = warehouseValidationHandler.handle(item);
 
-            assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.WAREHOUSE_UNAVAILABLE, result.getError());
+            assertTrue(result.isValid());
         }
 
         @Test

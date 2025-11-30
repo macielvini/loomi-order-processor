@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
@@ -23,9 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
 @Transactional
-@TestPropertySource(properties = {
-        "spring.kafka.bootstrap-servers=localhost:9092"
-    })
 class ProductRepositoryIntegrationTest {
 
         @Autowired

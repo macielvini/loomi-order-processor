@@ -1,0 +1,19 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+kafka:
+  topics:
+    order-events: order-events
+    order-created: order-created
+    order-processed: order-processed
+    order-failed: order-failed
+    low-stock-alert: order-low-stock-alerts
+
+
