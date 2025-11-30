@@ -1,6 +1,7 @@
 package com.loomi.order_processor.app.service;
 
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class OrderCreatedProcessorImpl implements OrderCreatedProcessor {
 
     private final PaymentService paymentService;
     private final FraudService fraudService;
+    private final OrderItemValidatorsByProduct validators;
 
     @Value("${order-processing.high-value-threshold:10000.00}")
     private BigDecimal highValueThreshold;
@@ -63,37 +65,26 @@ public class OrderCreatedProcessorImpl implements OrderCreatedProcessor {
             return ProcessingResult.failure("PAYMENT_FAILED");
         }
 
+        ProcessingResult validationResult = validateOrderItems(order);
+        if (!validationResult.isSuccess()) {
+            return validationResult;
+        }
+
         log.info("Global processing completed successfully for order: {}", order.id());
         return ProcessingResult.success();
     }
 
-    public ProcessingResult processOrderWithResult(Order order) {
-        log.info("Started processing order: {}", order.id());
-
-        if (order.totalAmount().compareTo(highValueThreshold) > 0) {
-            log.info("High-value order detected: {} (threshold: {})", order.totalAmount(), highValueThreshold);
-        }
-
-        try {
-            paymentService.processOrderPayment(order);
-        } catch (Exception e) {
-            log.error("Payment processing failed for order: {}", order.id(), e);
-            return ProcessingResult.failure("PAYMENT_FAILED");
-        }
-
-        if (order.totalAmount().compareTo(fraudThreshold) > 0) {
-            if (!fraudService.validateOrder(order)) {
-                log.warn("Fraud Alert - Order ID: {}", order.id());
-                return ProcessingResult.failure("FRAUD_DETECTED");
-            }
-        } else {
-            if (!fraudService.validateOrder(order)) {
-                log.warn("Fraud validation failed for order: {}", order.id());
-                return ProcessingResult.failure("FRAUD_DETECTED");
+    private ProcessingResult validateOrderItems(Order order) {
+        for (var item : order.items()) {
+            var validators = this.validators.getValidatorsFor(item.productType());
+            for (var validator : validators) {
+                var result = validator.validate(item);
+                if (!result.isValid()) {
+                    return ProcessingResult.failure(result.getError().toString());
+                }
             }
         }
-
-        log.info("Global processing completed successfully for order: {}", order.id());
+        
         return ProcessingResult.success();
     }
 }
