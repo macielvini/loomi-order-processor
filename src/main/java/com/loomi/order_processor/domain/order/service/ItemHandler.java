@@ -4,10 +4,13 @@ import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.ItemHandlerResult;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 
-public interface OrderItemValidator {
+public interface ItemHandler {
 
     boolean supports(ProductType type);
 
-    ItemHandlerResult validate(OrderItem item);
+    /**
+     * Handles validation and processing logic for the given item
+     */
+    ItemHandlerResult handle(OrderItem item);
     
 }

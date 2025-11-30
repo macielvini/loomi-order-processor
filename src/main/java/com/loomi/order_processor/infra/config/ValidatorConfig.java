@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.loomi.order_processor.app.service.OrderItemValidatorsByProduct;
-import com.loomi.order_processor.domain.order.service.OrderItemValidator;
+import com.loomi.order_processor.domain.order.service.ItemHandler;
 import com.loomi.order_processor.domain.order.service.ItemHandlerFor;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.ValidatorMap;
@@ -44,11 +44,11 @@ public class ValidatorConfig {
     }
 
     @Bean
-    OrderItemValidatorsByProduct orderItemValidators(List<OrderItemValidator> validators) {
+    OrderItemValidatorsByProduct orderItemValidators(List<ItemHandler> validators) {
 
-        Map<ProductType, List<OrderItemValidator>> map = new EnumMap<>(ProductType.class);
+        Map<ProductType, List<ItemHandler>> map = new EnumMap<>(ProductType.class);
 
-        for (OrderItemValidator validator : validators) {
+        for (ItemHandler validator : validators) {
 
             ItemHandlerFor annotation = validator.getClass().getAnnotation(ItemHandlerFor.class);
 

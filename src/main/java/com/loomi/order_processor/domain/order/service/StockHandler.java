@@ -13,12 +13,12 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 @ItemHandlerFor(value = ProductType.PHYSICAL)
-public class StockHandler implements OrderItemValidator {
+public class StockHandler implements ItemHandler {
 
     private final ProductRepository productRepository;
 
     @Override
-    public ItemHandlerResult validate(OrderItem item) {
+    public ItemHandlerResult handle(OrderItem item) {
         var optProduct = productRepository.findById(item.productId());
         if (optProduct.isEmpty()) {
             return ItemHandlerResult.error(ItemHandlerError.INTERNAL_ERROR);

@@ -78,7 +78,7 @@ public class OrderCreatedProcessorImpl implements OrderCreatedProcessor {
         for (var item : order.items()) {
             var validators = this.validators.getValidatorsFor(item.productType());
             for (var validator : validators) {
-                var result = validator.validate(item);
+                var result = validator.handle(item);
                 if (!result.isValid()) {
                     return ProcessingResult.failure(result.getError().toString());
                 }
