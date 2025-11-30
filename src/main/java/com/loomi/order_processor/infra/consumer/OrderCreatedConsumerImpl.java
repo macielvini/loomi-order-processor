@@ -4,31 +4,30 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.loomi.order_processor.domain.order.consumer.OrderConsumer;
+import com.loomi.order_processor.domain.order.consumer.OrderCreatedConsumer;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
+import com.loomi.order_processor.domain.order.service.OrderCreatedProcessor;
 import com.loomi.order_processor.domain.order.service.ProcessingResult;
-import com.loomi.order_processor.app.service.OrderCreatedProcessorImpl;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class OrderConsumerImpl implements OrderConsumer {
+public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
 
     private final OrderRepository orderRepository;
-    private final OrderCreatedProcessorImpl orderProcessor;
-    private final OrderProducer orderProducer;
+    private final OrderCreatedProcessor processor;
+    private final OrderProducer producer;
 
     @KafkaListener(topics = "${kafka.topics.order-created}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "orderCreatedListenerFactory")
     @Transactional
-    public void handleOrderCreatedEvent(OrderCreatedEvent event) {
+    public void handler(OrderCreatedEvent event) {
         log.info("Received Order Created Event: {}", event);
 
         var orderPayload = event.getPayload();
@@ -46,21 +45,21 @@ public class OrderConsumerImpl implements OrderConsumer {
                 return;
             }
 
-            ProcessingResult result = orderProcessor.processOrder(order);
+            ProcessingResult result = processor.processOrder(order);
 
             if (result.isSuccess()) {
                 order.status(OrderStatus.PROCESSED);
                 orderRepository.update(order);
 
                 var processedEvent = OrderProcessedEvent.fromOrder(orderId);
-                orderProducer.sendOrderProcessedEvent(processedEvent);
+                producer.sendOrderProcessedEvent(processedEvent);
                 log.info("Order {} processed successfully", orderId);
             } else {
                 order.status(OrderStatus.FAILED);
                 orderRepository.update(order);
 
                 var failedEvent = OrderFailedEvent.fromOrder(orderId, result.getFailureReason());
-                orderProducer.sendOrderFailedEvent(failedEvent);
+                producer.sendOrderFailedEvent(failedEvent);
                 log.warn("Order {} failed with reason: {}", orderId, result.getFailureReason());
             }
 
@@ -73,7 +72,7 @@ public class OrderConsumerImpl implements OrderConsumer {
                     orderRepository.update(order);
 
                     var failedEvent = OrderFailedEvent.fromOrder(orderId, "PROCESSING_ERROR: " + e.getMessage());
-                    orderProducer.sendOrderFailedEvent(failedEvent);
+                    producer.sendOrderFailedEvent(failedEvent);
                 }
             } catch (Exception updateException) {
                 log.error("Failed to update order status after error: {}", updateException.getMessage());
