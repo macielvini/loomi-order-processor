@@ -8,16 +8,16 @@ import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.loomi.order_processor.app.service.OrderItemValidatorsByProduct;
-import com.loomi.order_processor.domain.order.service.OrderItemValidator;
-import com.loomi.order_processor.domain.order.service.OrderItemValidatorFor;
+import com.loomi.order_processor.app.service.ItemHandlersByProduct;
+import com.loomi.order_processor.domain.order.service.ItemHandler;
+import com.loomi.order_processor.domain.order.service.ItemHandlerFor;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.ValidatorMap;
 import com.loomi.order_processor.domain.product.service.ProductValidator;
 import com.loomi.order_processor.domain.product.service.ValidationStrategyFor;
 
 @Configuration
-public class ValidatorConfig {
+public class AnnotatedServicesInjectorConfig {
     
     @Bean
     ValidatorMap productValidators(List<ProductValidator> validators) {
@@ -44,17 +44,17 @@ public class ValidatorConfig {
     }
 
     @Bean
-    OrderItemValidatorsByProduct orderItemValidators(List<OrderItemValidator> validators) {
+    ItemHandlersByProduct orderItemHandler(List<ItemHandler> validators) {
 
-        Map<ProductType, List<OrderItemValidator>> map = new EnumMap<>(ProductType.class);
+        Map<ProductType, List<ItemHandler>> map = new EnumMap<>(ProductType.class);
 
-        for (OrderItemValidator validator : validators) {
+        for (ItemHandler validator : validators) {
 
-            OrderItemValidatorFor annotation = validator.getClass().getAnnotation(OrderItemValidatorFor.class);
+            ItemHandlerFor annotation = validator.getClass().getAnnotation(ItemHandlerFor.class);
 
             if (annotation == null) {
                 throw new IllegalStateException(
-                        validator.getClass().getName() + " has no @OrderItemValidatorFor annotation");
+                        validator.getClass().getName() + " has no @ItemHandlersByProduct annotation");
             }
 
             if (annotation.global()) {
@@ -70,7 +70,7 @@ public class ValidatorConfig {
             }
         }
 
-        return new OrderItemValidatorsByProduct(map);
+        return new ItemHandlersByProduct(map);
     }
 
 }

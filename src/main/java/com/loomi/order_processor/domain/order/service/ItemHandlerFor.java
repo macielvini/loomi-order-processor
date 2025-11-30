@@ -9,7 +9,7 @@ import com.loomi.order_processor.domain.product.dto.ProductType;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface OrderItemValidatorFor {
+public @interface ItemHandlerFor {
     ProductType[] value() default {};
     boolean global() default false;
     

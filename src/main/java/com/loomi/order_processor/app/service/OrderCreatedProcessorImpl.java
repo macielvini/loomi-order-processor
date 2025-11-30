@@ -22,7 +22,7 @@ public class OrderCreatedProcessorImpl implements OrderCreatedProcessor {
 
     private final PaymentService paymentService;
     private final FraudService fraudService;
-    private final OrderItemValidatorsByProduct validators;
+    private final ItemHandlersByProduct validators;
 
     @Value("${order-processing.high-value-threshold:10000.00}")
     private BigDecimal highValueThreshold;
@@ -76,9 +76,9 @@ public class OrderCreatedProcessorImpl implements OrderCreatedProcessor {
 
     private ProcessingResult validateOrderItems(Order order) {
         for (var item : order.items()) {
-            var validators = this.validators.getValidatorsFor(item.productType());
+            var validators = this.validators.getHandlersFor(item.productType());
             for (var validator : validators) {
-                var result = validator.validate(item);
+                var result = validator.handle(item);
                 if (!result.isValid()) {
                     return ProcessingResult.failure(result.getError().toString());
                 }
