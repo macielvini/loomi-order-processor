@@ -1,29 +1,40 @@
 spring:
+  
   application:
     name: order_processor
+  
   datasource:
     url:
     username: 
     password: 
+  
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
+  
   flyway:
     enabled: true
     baseline-on-migrate: true
+  
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:} 
+    
     consumer:
       group-id: order-processor-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.loomi.order_processor"
+        spring.json.trusted.packages: "com.loomi,java.util,java.time"
+    
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
 
 kafka:
   topics:
