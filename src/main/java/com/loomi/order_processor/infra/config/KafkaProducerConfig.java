@@ -17,6 +17,7 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loomi.order_processor.domain.order.entity.LowStockAlertEvent;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
@@ -34,6 +35,9 @@ public class KafkaProducerConfig {
 
     @Value("${kafka.topics.order-failed}")
     private String orderFailedTopic;
+
+    @Value("${kafka.topics.low-stock-alert}")
+    private String lowStockAlertTopic;
 
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
@@ -58,6 +62,11 @@ public class KafkaProducerConfig {
     @Bean
     NewTopic orderFailedTopic() {
         return new NewTopic(orderFailedTopic, 1, (short) 1);
+    }
+
+    @Bean
+    NewTopic lowStockAlertTopic() {
+        return new NewTopic(lowStockAlertTopic, 1, (short) 1);
     }
 
     @Bean
@@ -94,6 +103,17 @@ public class KafkaProducerConfig {
     }
 
     @Bean
+    ProducerFactory<String, LowStockAlertEvent> lowStockAlertProducerFactory(ObjectMapper objectMapper) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(
+                props,
+                new StringSerializer(),
+                new JsonSerializer<>(objectMapper));
+    }
+
+    @Bean
     KafkaTemplate<String, OrderCreatedEvent> orderCreatedKafkaTemplate(
             ProducerFactory<String, OrderCreatedEvent> pf) {
         return new KafkaTemplate<>(pf);
@@ -108,6 +128,12 @@ public class KafkaProducerConfig {
     @Bean
     KafkaTemplate<String, OrderFailedEvent> orderFailedKafkaTemplate(
             ProducerFactory<String, OrderFailedEvent> pf) {
+        return new KafkaTemplate<>(pf);
+    }
+
+    @Bean
+    KafkaTemplate<String, LowStockAlertEvent> lowStockAlertKafkaTemplate(
+            ProducerFactory<String, LowStockAlertEvent> pf) {
         return new KafkaTemplate<>(pf);
     }
 }
