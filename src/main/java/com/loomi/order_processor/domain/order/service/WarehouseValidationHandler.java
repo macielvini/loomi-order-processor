@@ -1,6 +1,5 @@
 package com.loomi.order_processor.domain.order.service;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -33,7 +32,7 @@ public class WarehouseValidationHandler implements ItemHandler {
             return ItemHandlerResult.error(ItemHandlerError.WAREHOUSE_UNAVAILABLE);
         }
 
-        String location = warehouseLocation.toString().trim();
+        String location = warehouseLocation.toString().trim().toUpperCase();
         if (location.isEmpty()) {
             log.warn("Empty warehouseLocation in metadata for product {}", item.productId());
             return ItemHandlerResult.error(ItemHandlerError.WAREHOUSE_UNAVAILABLE);
