@@ -16,7 +16,6 @@ public class OrderProducerImpl implements OrderProducer {
 
     private final KafkaTemplate<String, OrderCreatedEvent> orderCreatedTemplate;
 
-
     @Value("${kafka.topics.order-created}")
     private String topic;
 
