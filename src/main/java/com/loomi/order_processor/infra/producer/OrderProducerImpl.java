@@ -14,16 +14,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderProducerImpl implements OrderProducer {
 
-    private final KafkaTemplate<String, Object> template;
+    private final KafkaTemplate<String, OrderCreatedEvent> orderCreatedTemplate;
 
 
-    @Value("${kafka.topics.order-events}")
+    @Value("${kafka.topics.order-created}")
     private String topic;
 
     @Override
     public void sendOrderCreatedEvent(@NotNull OrderCreatedEvent event) {
         String key = event.getId().toString();
-        template.send(topic, key, event);
+        orderCreatedTemplate.send(topic, key, event);
     }
     
 }
