@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ItemHandlerResult {
-    private OrderItemValidationError error;
+    private ItemHandlerError error;
 
     public boolean isValid() {
         return error == null;
@@ -20,7 +20,7 @@ public class ItemHandlerResult {
         return ItemHandlerResult.builder().build();
     }
 
-    public static ItemHandlerResult error(OrderItemValidationError error) {
+    public static ItemHandlerResult error(ItemHandlerError error) {
         return ItemHandlerResult.builder().error(error).build();
     }
 }
