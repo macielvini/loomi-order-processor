@@ -9,18 +9,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OrderItemValidationResult {
+public class ItemHandlerResult {
     private OrderItemValidationError error;
 
     public boolean isValid() {
         return error == null;
     }
 
-    public static OrderItemValidationResult ok() {
-        return OrderItemValidationResult.builder().build();
+    public static ItemHandlerResult ok() {
+        return ItemHandlerResult.builder().build();
     }
 
-    public static OrderItemValidationResult error(OrderItemValidationError error) {
-        return OrderItemValidationResult.builder().error(error).build();
+    public static ItemHandlerResult error(OrderItemValidationError error) {
+        return ItemHandlerResult.builder().error(error).build();
     }
 }
