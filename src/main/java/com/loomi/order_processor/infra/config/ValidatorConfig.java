@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.loomi.order_processor.app.service.OrderItemValidatorsByProduct;
 import com.loomi.order_processor.domain.order.service.OrderItemValidator;
-import com.loomi.order_processor.domain.order.service.OrderItemValidatorFor;
+import com.loomi.order_processor.domain.order.service.ItemHandlerFor;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.ValidatorMap;
 import com.loomi.order_processor.domain.product.service.ProductValidator;
@@ -50,7 +50,7 @@ public class ValidatorConfig {
 
         for (OrderItemValidator validator : validators) {
 
-            OrderItemValidatorFor annotation = validator.getClass().getAnnotation(OrderItemValidatorFor.class);
+            ItemHandlerFor annotation = validator.getClass().getAnnotation(ItemHandlerFor.class);
 
             if (annotation == null) {
                 throw new IllegalStateException(
