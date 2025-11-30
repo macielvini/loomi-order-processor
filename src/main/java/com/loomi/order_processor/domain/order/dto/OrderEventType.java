@@ -4,4 +4,5 @@ public enum OrderEventType {
     ORDER_CREATED,
     ORDER_PROCESSED,
     ORDER_FAILED,
+    LOW_STOCK_ALERT,
 }
