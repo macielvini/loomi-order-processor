@@ -1,5 +1,6 @@
 package com.loomi.order_processor.infra.producer;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +16,14 @@ public class OrderProducerImpl implements OrderProducer {
 
     private final KafkaTemplate<String, Object> template;
 
-    private static final String TOPIC = "order-events";
+
+    @Value("${kafka.topics.order-events}")
+    private String topic;
 
     @Override
     public void sendOrderCreatedEvent(@NotNull OrderCreatedEvent event) {
         String key = event.getId().toString();
-        template.send(TOPIC, key, event);
+        template.send(topic, key, event);
     }
     
 }
