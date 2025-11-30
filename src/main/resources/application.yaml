@@ -31,3 +31,9 @@ kafka:
   topics:
     order-events: order-events
     order-created: order-created
+    order-processed: order-processed
+    order-failed: order-failed
+
+order-processing:
+  high-value-threshold: 10000.00
+  fraud-threshold: 20000.00

@@ -18,6 +18,8 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
+import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
+import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 
 @Configuration
 public class KafkaProducerConfig {
@@ -26,6 +28,12 @@ public class KafkaProducerConfig {
 
     @Value("${kafka.topics.order-created}")
     private String orderCreatedTopic;
+
+    @Value("${kafka.topics.order-processed}")
+    private String orderProcessedTopic;
+
+    @Value("${kafka.topics.order-failed}")
+    private String orderFailedTopic;
 
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
@@ -43,7 +51,39 @@ public class KafkaProducerConfig {
     }
 
     @Bean
+    NewTopic orderProcessedTopic() {
+        return new NewTopic(orderProcessedTopic, 1, (short) 1);
+    }
+
+    @Bean
+    NewTopic orderFailedTopic() {
+        return new NewTopic(orderFailedTopic, 1, (short) 1);
+    }
+
+    @Bean
     ProducerFactory<String, OrderCreatedEvent> orderCreatedProducerFactory(ObjectMapper objectMapper) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(
+                props,
+                new StringSerializer(),
+                new JsonSerializer<>(objectMapper));
+    }
+
+    @Bean
+    ProducerFactory<String, OrderProcessedEvent> orderProcessedProducerFactory(ObjectMapper objectMapper) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(
+                props,
+                new StringSerializer(),
+                new JsonSerializer<>(objectMapper));
+    }
+
+    @Bean
+    ProducerFactory<String, OrderFailedEvent> orderFailedProducerFactory(ObjectMapper objectMapper) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -56,6 +96,18 @@ public class KafkaProducerConfig {
     @Bean
     KafkaTemplate<String, OrderCreatedEvent> orderCreatedKafkaTemplate(
             ProducerFactory<String, OrderCreatedEvent> pf) {
+        return new KafkaTemplate<>(pf);
+    }
+
+    @Bean
+    KafkaTemplate<String, OrderProcessedEvent> orderProcessedKafkaTemplate(
+            ProducerFactory<String, OrderProcessedEvent> pf) {
+        return new KafkaTemplate<>(pf);
+    }
+
+    @Bean
+    KafkaTemplate<String, OrderFailedEvent> orderFailedKafkaTemplate(
+            ProducerFactory<String, OrderFailedEvent> pf) {
         return new KafkaTemplate<>(pf);
     }
 }
