@@ -30,4 +30,4 @@ spring:
 kafka:
   topics:
     order-events: order-events
-
+    order-created: order-created
