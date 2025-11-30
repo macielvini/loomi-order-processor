@@ -10,8 +10,13 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OrderCreatedEvent extends OrderEvent<Order> {
-    public OrderCreatedEvent(Order order) {
+public class OrderCreatedEvent extends OrderEvent<OrderCreatedPayload> {
+    public OrderCreatedEvent(OrderCreatedPayload order) {
         super(UUID.randomUUID(), OrderEventType.ORDER_CREATED, LocalDateTime.now(), order);
+    }
+
+    public static OrderCreatedEvent fromOrder(Order order) {
+        var payload = new OrderCreatedPayload(order.id(), order.customerId(), order.status(), order.totalAmount(), order.items());
+        return new OrderCreatedEvent(payload);
     }
 }

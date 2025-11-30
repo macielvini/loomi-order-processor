@@ -75,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
             .build();
         var savedOrder = orderRepository.save(order);
 
-        orderProducer.sendOrderCreatedEvent(new OrderCreatedEvent(savedOrder));
+        orderProducer.sendOrderCreatedEvent(OrderCreatedEvent.fromOrder(savedOrder));
         return savedOrder;
     }
 }
