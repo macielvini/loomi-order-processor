@@ -1,37 +1,28 @@
 spring:
-  
   datasource:
     url: jdbc:postgresql://postgres:5432/order_processor
     username: appuser
     password: apppass
-  
+
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
-  
+
   flyway:
     enabled: true
     baseline-on-migrate: true
-  
+
   kafka:
     bootstrap-servers: kafka:29092
-    
+
     consumer:
       group-id: order-processor-group
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "com.loomi,java.util,java.time"
-    
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.JsonSerializer
-  
+
   jackson:
     serialization:
-      WRITE_DATES_AS_TIMESTAMPS: false
+      write-dates-as-timestamps: false
 
 kafka:
   topics:
