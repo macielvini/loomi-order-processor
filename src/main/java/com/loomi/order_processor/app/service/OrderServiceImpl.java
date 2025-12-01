@@ -23,6 +23,7 @@ import com.loomi.order_processor.domain.product.exception.ProductIsNotActiveExce
 import com.loomi.order_processor.domain.product.exception.ProductNotFoundException;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -40,7 +41,16 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public Order createOrder(CreateOrder createOrder) {
+        var order = buildOrderWithPriceSnapshot(createOrder);
+        var savedOrder = orderRepository.save(order);
+
+        orderProducer.sendOrderCreatedEvent(OrderCreatedEvent.fromOrder(savedOrder));
+        return savedOrder;
+    }
+
+    private Order buildOrderWithPriceSnapshot(CreateOrder createOrder) {
         var toValidateProducts = productRepository.findAllById(createOrder.items().stream()
                 .map(CreateOrderItem::productId)
                 .collect(Collectors.toList()));
@@ -71,15 +81,12 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        var order = Order.builder()
+        return Order.builder()
                 .customerId(createOrder.customerId())
                 .items(orderItems)
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
                 .build();
-        var savedOrder = orderRepository.save(order);
-
-        orderProducer.sendOrderCreatedEvent(OrderCreatedEvent.fromOrder(savedOrder));
-        return savedOrder;
+                
     }
 }

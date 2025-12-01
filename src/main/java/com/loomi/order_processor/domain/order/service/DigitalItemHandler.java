@@ -6,11 +6,14 @@ import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.notification.service.EmailService;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
-import com.loomi.order_processor.domain.order.dto.ItemHandlerError;
-import com.loomi.order_processor.domain.order.dto.ItemHandlerResult;
+import com.loomi.order_processor.domain.order.dto.OrderError;
+import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
+import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.product.dto.ProductType;
+import com.loomi.order_processor.domain.product.dto.ValidationResult;
+import com.loomi.order_processor.domain.product.entity.Product;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -19,8 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ItemHandlerFor(value = ProductType.DIGITAL)
-public class DigitalProductHandler implements ItemHandler {
+public class DigitalItemHandler implements OrderItemHandler {
 
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
@@ -29,36 +31,38 @@ public class DigitalProductHandler implements ItemHandler {
     private static int MAX_LICENSE_PER_ORDER_ITEM = 1;
 
     @Override
-    public ItemHandlerResult handle(OrderItem item) {
-        // Set to ONE license per order item
-        item.quantity(MAX_LICENSE_PER_ORDER_ITEM); 
+    public ProductType supportedType() {
+        return ProductType.DIGITAL;
+    }
 
-        var optProduct = productRepository.findById(item.productId());
-        if (optProduct.isEmpty()) {
-            log.error("Product not found: {}", item.productId());
-            return ItemHandlerResult.error(ItemHandlerError.INTERNAL_ERROR);
-        }
-
-        var product = optProduct.get();
-
-        // Check distribution rights are still valid
+    @Override
+    public ValidationResult validate(OrderItem item, Product product, Order ctx) {
         if (!product.isActive()) {
-            return ItemHandlerResult.error(ItemHandlerError.DISTRIBUTION_RIGHTS_EXPIRED);
+            log.error("Product is not active: {}", item.productId());
+            return ValidationResult.fail(OrderError.DISTRIBUTION_RIGHTS_EXPIRED.toString());
         }
 
-        // Check license availability
-        if (product.stockQuantity() == null || product.stockQuantity() < item.quantity()) {
-            return ItemHandlerResult.error(ItemHandlerError.LICENSE_UNAVAILABLE);
+        if (product.stockQuantity() == null || product.stockQuantity() < MAX_LICENSE_PER_ORDER_ITEM) {
+            log.error("License unavailable for product: {}", item.productId());
+            return ValidationResult.fail(OrderError.LICENSE_UNAVAILABLE.toString());
         }
 
-        var existingOrders = orderRepository.findByCustomerIdAndProductIdAndStatus(
+        var customerAlreadyOwns = !orderRepository.findByCustomerIdAndProductIdAndStatus(
                 item.customerId(),
                 item.productId(),
-                OrderStatus.PROCESSED);
+                OrderStatus.PROCESSED).isEmpty();
 
-        if (!existingOrders.isEmpty()) {
-            return ItemHandlerResult.error(ItemHandlerError.ALREADY_OWNED);
+        if (customerAlreadyOwns) {
+            log.error("Customer already owns product: {}", item.productId());
+            return ValidationResult.fail(OrderError.ALREADY_OWNED.toString());
         }
+
+        return ValidationResult.ok();
+    }
+
+    @Override
+    public OrderProcessResult process(OrderItem item, Product product, Order ctx) {
+        item.quantity(MAX_LICENSE_PER_ORDER_ITEM);
 
         int currentStock = product.stockQuantity();
         int remainingStock = currentStock - item.quantity();
@@ -75,12 +79,7 @@ public class DigitalProductHandler implements ItemHandler {
         var emailPayload = createEmailPayload(item, product, activationKey);
         emailService.sendTo(customerEmail, emailPayload);
 
-        return ItemHandlerResult.ok();
-    }
-
-    @Override
-    public boolean supports(ProductType type) {
-        return type.equals(ProductType.DIGITAL);
+        return OrderProcessResult.ok();
     }
 
     private String getDigitalLicenseFor(OrderItem item) {

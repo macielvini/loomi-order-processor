@@ -1,6 +1,6 @@
 package com.loomi.order_processor.domain.order.dto;
 
-public enum ItemHandlerError {
+public enum OrderError {
     OUT_OF_STOCK,
     INTERNAL_ERROR,
     WAREHOUSE_UNAVAILABLE,
@@ -10,5 +10,6 @@ public enum ItemHandlerError {
     SUBSCRIPTION_NOT_AVAILABLE,
     SUBSCRIPTION_LIMIT_EXCEEDED,
     DUPLICATE_ACTIVE_SUBSCRIPTION,
-    INCOMPATIBLE_SUBSCRIPTIONS
+    INCOMPATIBLE_SUBSCRIPTIONS,
+    PENDING_MANUAL_APPROVAL
 }
