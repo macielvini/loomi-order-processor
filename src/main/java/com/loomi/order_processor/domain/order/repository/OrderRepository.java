@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 
 public interface OrderRepository {
@@ -17,5 +18,7 @@ public interface OrderRepository {
     List<Order> findAll(int limit);
 
     void update(Order order);
+
+    List<Order> findByCustomerIdAndProductIdAndStatus(String customerId, UUID productId, OrderStatus status);
 }
 
