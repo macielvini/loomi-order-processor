@@ -16,7 +16,7 @@ public class FraudServiceImpl implements FraudService {
         var fraudProbability = 0.05; // 5%
         var minOrderValueToValidate =  BigDecimal.valueOf(20000.00);
 
-        if(order.totalAmount().compareTo(minOrderValueToValidate) > 0) {
+        if(order.totalAmount().compareTo(minOrderValueToValidate) >= 0) {
             var random = new Random().nextDouble();
             return random <= fraudProbability;
         }
