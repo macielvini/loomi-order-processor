@@ -3,7 +3,6 @@ package com.loomi.order_processor.domain.order.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -137,53 +136,57 @@ class PreOrderItemHandlerTest {
         }
 
         @Test
-        @DisplayName("shouldThrowException_whenProductMetadataIsNull")
-        void shouldThrowException_whenProductMetadataIsNull() {
+        @DisplayName("shouldReturnInvalidReleaseDate_whenProductMetadataIsNull")
+        void shouldReturnInvalidReleaseDate_whenProductMetadataIsNull() {
             OrderItem item = createOrderItem(1, BigDecimal.valueOf(100.00), null);
             Product product = createProduct(true, 100, null);
             Order order = createOrder(item);
 
-            assertThrows(IllegalArgumentException.class, () -> {
-                preOrderItemHandler.validate(item, product, order);
-            });
+            ValidationResult result = preOrderItemHandler.validate(item, product, order);
+
+            assertFalse(result.isValid());
+            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
         }
 
         @Test
-        @DisplayName("shouldThrowException_whenReleaseDateIsMissing")
-        void shouldThrowException_whenReleaseDateIsMissing() {
+        @DisplayName("shouldReturnInvalidReleaseDate_whenReleaseDateIsMissing")
+        void shouldReturnInvalidReleaseDate_whenReleaseDateIsMissing() {
             OrderItem item = createOrderItem(1, BigDecimal.valueOf(100.00), null);
             Product product = createProduct(true, 100, new RawProductMetadata());
             Order order = createOrder(item);
 
-            assertThrows(IllegalArgumentException.class, () -> {
-                preOrderItemHandler.validate(item, product, order);
-            });
+            ValidationResult result = preOrderItemHandler.validate(item, product, order);
+
+            assertFalse(result.isValid());
+            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
         }
 
         @Test
-        @DisplayName("shouldThrowException_whenReleaseDateIsEmpty")
-        void shouldThrowException_whenReleaseDateIsEmpty() {
+        @DisplayName("shouldReturnInvalidReleaseDate_whenReleaseDateIsEmpty")
+        void shouldReturnInvalidReleaseDate_whenReleaseDateIsEmpty() {
             RawProductMetadata productMetadata = createMetadataWithReleaseDate("");
             OrderItem item = createOrderItem(1, BigDecimal.valueOf(100.00), null);
             Product product = createProduct(true, 100, productMetadata);
             Order order = createOrder(item);
 
-            assertThrows(IllegalArgumentException.class, () -> {
-                preOrderItemHandler.validate(item, product, order);
-            });
+            ValidationResult result = preOrderItemHandler.validate(item, product, order);
+
+            assertFalse(result.isValid());
+            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
         }
 
         @Test
-        @DisplayName("shouldThrowException_whenReleaseDateIsBlank")
-        void shouldThrowException_whenReleaseDateIsBlank() {
+        @DisplayName("shouldReturnInvalidReleaseDate_whenReleaseDateIsBlank")
+        void shouldReturnInvalidReleaseDate_whenReleaseDateIsBlank() {
             RawProductMetadata productMetadata = createMetadataWithReleaseDate("   ");
             OrderItem item = createOrderItem(1, BigDecimal.valueOf(100.00), null);
             Product product = createProduct(true, 100, productMetadata);
             Order order = createOrder(item);
 
-            assertThrows(IllegalArgumentException.class, () -> {
-                preOrderItemHandler.validate(item, product, order);
-            });
+            ValidationResult result = preOrderItemHandler.validate(item, product, order);
+
+            assertFalse(result.isValid());
+            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
         }
 
         @Test
@@ -280,15 +283,16 @@ class PreOrderItemHandlerTest {
     class ProcessTests {
 
         @Test
-        @DisplayName("shouldThrowException_whenReleaseDateIsMissingInProcess")
-        void shouldThrowException_whenReleaseDateIsMissingInProcess() {
+        @DisplayName("shouldReturnInvalidReleaseDate_whenReleaseDateIsMissingInProcess")
+        void shouldReturnInvalidReleaseDate_whenReleaseDateIsMissingInProcess() {
             OrderItem item = createOrderItem(1, BigDecimal.valueOf(100.00), null);
             Product product = createProduct(true, 100, new RawProductMetadata());
             Order order = createOrder(item);
 
-            assertThrows(IllegalArgumentException.class, () -> {
-                preOrderItemHandler.process(item, product, order);
-            });
+            OrderProcessResult result = preOrderItemHandler.process(item, product, order);
+
+            assertFalse(result.isProcessed());
+            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
         }
 
         @Test
