@@ -31,6 +31,8 @@ import lombok.NoArgsConstructor;
 public class OrderItem {
     @NotNull
     private UUID productId;
+
+    private String customerId;
     
     @Min(1)
     private int quantity;
@@ -52,6 +54,17 @@ public class OrderItem {
     public static OrderItem fromProduct(Product product, Integer quantity, RawProductMetadata metadata) {
         return OrderItem.builder()
             .productId(product.id())
+            .quantity(quantity)
+            .productType(product.productType())
+            .price(product.price())
+            .metadata(metadata)
+            .build();
+    }
+
+    public static OrderItem fromProduct(Product product, String customerId, Integer quantity, RawProductMetadata metadata) {
+        return OrderItem.builder()
+            .productId(product.id())
+            .customerId(customerId)
             .quantity(quantity)
             .productType(product.productType())
             .price(product.price())
