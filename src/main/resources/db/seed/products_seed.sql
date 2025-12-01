@@ -10,7 +10,7 @@ INSERT INTO products (id, name, product_type, price, stock_quantity, is_active, 
 -- Assinaturas
 INSERT INTO products (id, name, product_type, price, stock_quantity, is_active, metadata) VALUES
   (gen_random_uuid(), 'Netflix Basic',           'SUBSCRIPTION',  19.90, NULL, true, '{"GROUP_ID": "NETFLIX"}'),
-  (gen_random_uuid(), 'Netflix Premium',         'SUBSCRIPTION',  49.90, NULL, true, '{"GROUP_ID": "NETFLIX",}'),
+  (gen_random_uuid(), 'Netflix Premium',         'SUBSCRIPTION',  49.90, NULL, true, '{"GROUP_ID": "NETFLIX"}'),
   (gen_random_uuid(), 'Adobe Cloud Pro',         'SUBSCRIPTION', 59.00, NULL, true, '{"GROUP_ID": "ADOBE"}'),
   (gen_random_uuid(), 'Adobe Cloud Enterprise',  'SUBSCRIPTION', 399.00, NULL, true, '{"GROUP_ID": "ADOBE"}');
 
