@@ -100,13 +100,13 @@ public class CorporateItemHandler implements OrderItemHandler {
 
         BigDecimal orderTotal = ctx.totalAmount();
         if (orderTotal.compareTo(MAX_CREDIT_LIMIT) > 0) {
-            log.info("Order {} with total ${} exceeds credit limit of ${} for customer {}", 
+            log.info("Order {} with total ${} exceeds credit limit of ${} for customer {}",
                     ctx.id(), orderTotal, MAX_CREDIT_LIMIT, ctx.customerId());
             return ValidationResult.fail(OrderError.CREDIT_LIMIT_EXCEEDED.toString());
         }
 
         if (orderTotal.compareTo(HIGH_VALUE_THRESHOLD) > 0) {
-            log.info("Order {} requires manual approval: total amount ${} exceeds threshold of ${}", 
+            log.info("Order {} requires manual approval: total amount ${} exceeds threshold of ${}",
                     ctx.id(), orderTotal, HIGH_VALUE_THRESHOLD);
             return ValidationResult.requireHumanReview();
         }
@@ -116,20 +116,18 @@ public class CorporateItemHandler implements OrderItemHandler {
 
     @Override
     public OrderProcessResult process(OrderItem item, Product product, Order ctx) {
-        int totalCorporateQuantity = ctx.items().stream()
-                .filter(i -> i.productType() == ProductType.CORPORATE)
-                .mapToInt(OrderItem::quantity)
-                .sum();
+        if (item.quantity() >= VOLUME_DISCOUNT_THRESHOLD) {
+            int blocks = item.quantity() / VOLUME_DISCOUNT_THRESHOLD;
+            BigDecimal unitPrice = item.price();
 
-        log.info("Processing corporate item {}: total corporate quantity in order is {}", 
-                item.productId(), totalCorporateQuantity);
+            BigDecimal discountUnits = BigDecimal.valueOf(blocks * VOLUME_DISCOUNT_THRESHOLD);
+            BigDecimal discountBase = unitPrice.multiply(discountUnits);
+            BigDecimal discountAmount = discountBase.multiply(BigDecimal.valueOf(VOLUME_DISCOUNT_PERCENTAGE));
 
-        if (totalCorporateQuantity > VOLUME_DISCOUNT_THRESHOLD) {
-            BigDecimal originalPrice = item.price();
-            BigDecimal discountAmount = originalPrice.multiply(BigDecimal.valueOf(VOLUME_DISCOUNT_PERCENTAGE));
+
             item.metadata().put("discountAmount", discountAmount);
-            log.info("Applied discount of {}% to product {} in order {}: ${} -> ${}", 
-                    VOLUME_DISCOUNT_PERCENTAGE * 100, item.productId(), ctx.id(), originalPrice, discountAmount);
+            log.info("Applied volume discount of {}% to corporate item {} in order {}: quantity={}, blocks={}, unitPrice={}, discountAmount={}",
+                    VOLUME_DISCOUNT_PERCENTAGE * 100, item.productId(), ctx.id(), item.quantity(), blocks, unitPrice, discountAmount);
         }
 
         String paymentTerms = getPaymentTerms(item);
@@ -139,4 +137,3 @@ public class CorporateItemHandler implements OrderItemHandler {
         return OrderProcessResult.ok();
     }
 }
-
