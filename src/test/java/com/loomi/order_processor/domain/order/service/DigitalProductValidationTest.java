@@ -90,7 +90,7 @@ class DigitalProductValidationTest {
     private EmailService emailService;
 
     @InjectMocks
-    private DigitalProductHandler digitalProductHandler;
+    private DigitalItemHandler digitalProductHandler;
 
     @Test
     @DisplayName("shouldReturnInternalError_whenProductNotFound")

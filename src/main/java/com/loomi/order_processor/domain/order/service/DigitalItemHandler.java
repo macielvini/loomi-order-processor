@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DigitalProductHandler implements OrderItemHandler {
+public class DigitalItemHandler implements OrderItemHandler {
 
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
