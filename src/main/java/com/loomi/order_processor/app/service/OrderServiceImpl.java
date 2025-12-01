@@ -60,19 +60,23 @@ public class OrderServiceImpl implements OrderService {
                 throw new ProductIsNotActiveException(product.id());
             }
 
-            orderItems.add(OrderItem.fromProduct(product, currentItem.quantity(), currentItem.metadata()));
+            orderItems.add(OrderItem.fromProduct(
+                    product,
+                    createOrder.customerId(),
+                    currentItem.quantity(),
+                    currentItem.metadata()));
         }
 
         var totalAmount = orderItems.stream()
                 .map(OrderItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-                
+
         var order = Order.builder()
-            .customerId(createOrder.customerId())
-            .items(orderItems)
-            .status(OrderStatus.PENDING)
-            .totalAmount(totalAmount)
-            .build();
+                .customerId(createOrder.customerId())
+                .items(orderItems)
+                .status(OrderStatus.PENDING)
+                .totalAmount(totalAmount)
+                .build();
         var savedOrder = orderRepository.save(order);
 
         orderProducer.sendOrderCreatedEvent(OrderCreatedEvent.fromOrder(savedOrder));
