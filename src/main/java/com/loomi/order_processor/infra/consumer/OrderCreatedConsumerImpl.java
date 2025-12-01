@@ -13,6 +13,7 @@ import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
+import com.loomi.order_processor.domain.order.entity.OrderPendingApprovalEvent;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
@@ -58,7 +59,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
                 order.status(OrderStatus.PENDING_APPROVAL);
                 orderRepository.update(order);
                 log.info("Order {} requires manual approval", orderId);
-                producer.sendOrderFailedEvent(buildFailedEvent(orderId, OrderError.PENDING_MANUAL_APPROVAL.toString()));
+                producer.sendOrderPendingApprovalEvent(OrderPendingApprovalEvent.fromOrder(orderId));
                 return;
             }
 

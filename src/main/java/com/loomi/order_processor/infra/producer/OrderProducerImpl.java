@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
+import com.loomi.order_processor.domain.order.entity.OrderPendingApprovalEvent;
 import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 
@@ -19,6 +20,7 @@ public class OrderProducerImpl implements OrderProducer {
     private final KafkaTemplate<String, OrderCreatedEvent> orderCreatedTemplate;
     private final KafkaTemplate<String, OrderProcessedEvent> orderProcessedTemplate;
     private final KafkaTemplate<String, OrderFailedEvent> orderFailedTemplate;
+    private final KafkaTemplate<String, OrderPendingApprovalEvent> orderPendingApprovalTemplate;
 
     @Value("${kafka.topics.order-created}")
     private String orderCreatedTopic;
@@ -28,6 +30,9 @@ public class OrderProducerImpl implements OrderProducer {
 
     @Value("${kafka.topics.order-failed}")
     private String orderFailedTopic;
+
+    @Value("${kafka.topics.order-pending-approval}")
+    private String orderPendingApprovalTopic;
 
     @Override
     public void sendOrderCreatedEvent(@NotNull OrderCreatedEvent event) {
@@ -45,5 +50,11 @@ public class OrderProducerImpl implements OrderProducer {
     public void sendOrderFailedEvent(@NotNull OrderFailedEvent event) {
         String key = event.getPayload().getOrderId().toString();
         orderFailedTemplate.send(orderFailedTopic, key, event);
+    }
+
+    @Override
+    public void sendOrderPendingApprovalEvent(@NotNull OrderPendingApprovalEvent event) {
+        String key = event.getOrderId().toString();
+        orderPendingApprovalTemplate.send(orderPendingApprovalTopic, key, event);
     }
 }
