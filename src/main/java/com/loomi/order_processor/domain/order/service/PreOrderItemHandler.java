@@ -108,7 +108,8 @@ public class PreOrderItemHandler implements OrderItemHandler {
         }
 
         if (product.metadata() != null && product.metadata().containsKey("preOrderDiscount")) {
-            BigDecimal discount = new BigDecimal(product.metadata().get("preOrderDiscount").toString().trim());
+            BigDecimal discount = new BigDecimal(
+                product.metadata().getOrDefault("preOrderDiscount", "0").toString().trim());
             item.price(item.price().subtract(discount));
             log.info(
                     "Applied pre-order discount for product {}: ${} -> ${}",
