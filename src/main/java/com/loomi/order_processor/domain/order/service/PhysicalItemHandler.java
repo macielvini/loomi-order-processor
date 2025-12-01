@@ -1,8 +1,5 @@
 package com.loomi.order_processor.domain.order.service;
 
-import java.util.Map;
-import java.util.Set;
-
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderError;
@@ -26,15 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 public class PhysicalItemHandler implements OrderItemHandler {
 
     private static final int LOW_STOCK_THRESHOLD = 5;
-    private static final Map<String, Integer> DELIVERY_DAYS_BY_LOCATION = Map.of(
-        "SP", 5,
-        "RJ", 7,
-        "MG", 10
-    );
-    private static final Set<String> WAREHOUSE_LOCATIONS = Set.of("SP", "RJ", "MG");
 
     private final ProductRepository productRepository;
     private final AlertProducer alertProducer;
+    private final DeliveryService deliveryService;
 
     private ValidationResult validateMetadata(OrderItem item) {
         if (item.metadata() == null) {
@@ -71,7 +63,7 @@ public class PhysicalItemHandler implements OrderItemHandler {
 
         String location = getWarehouseLocation(item);
 
-        if (!WAREHOUSE_LOCATIONS.contains(location)) {
+        if (!deliveryService.isValidWarehouseLocation(location)) {
             log.warn("Invalid warehouseLocation in metadata for product {}", item.productId());
             return ValidationResult.fail(OrderError.WAREHOUSE_UNAVAILABLE.toString());
         }
@@ -111,7 +103,7 @@ public class PhysicalItemHandler implements OrderItemHandler {
         productRepository.update(product);
         var location = getWarehouseLocation(item);
         // Delivery time calculation
-        int deliveryDays = DELIVERY_DAYS_BY_LOCATION.getOrDefault(location, 10);
+        int deliveryDays = deliveryService.calculateDeliveryDays(location);
         item.metadata().put("deliveryDays", deliveryDays);
 
         return OrderProcessResult.ok();
