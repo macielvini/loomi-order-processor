@@ -25,9 +25,11 @@ import com.loomi.order_processor.domain.product.repository.ProductRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -60,12 +62,12 @@ public class OrderServiceImpl implements OrderService {
         }
 
         var orderItems = new ArrayList<OrderItem>();
-        for (var product : toValidateProducts) {
-            var currentItem = createOrder.items().stream()
-                    .filter(item -> item.productId().equals(product.id()))
+        for (var item : createOrder.items()) {
+            var product = toValidateProducts.stream()
+                    .filter(p -> p.id().equals(item.productId()))
                     .findFirst()
-                    .orElseThrow(() -> new ProductNotFoundException(product.id()));
-
+                    .orElseThrow(() -> new ProductNotFoundException(item.productId()));
+            
             if (!product.isActive()) {
                 throw new ProductIsNotActiveException(product.id());
             }
@@ -73,8 +75,8 @@ public class OrderServiceImpl implements OrderService {
             orderItems.add(OrderItem.fromProduct(
                     product,
                     createOrder.customerId(),
-                    currentItem.quantity(),
-                    currentItem.metadata()));
+                    item.quantity(),
+                    item.metadata()));
         }
 
         var totalAmount = orderItems.stream()
