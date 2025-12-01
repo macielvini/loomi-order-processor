@@ -1,6 +1,5 @@
 package com.loomi.order_processor.domain.order.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -8,7 +7,6 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,15 +18,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.loomi.order_processor.domain.order.dto.OrderError;
-import com.loomi.order_processor.domain.order.dto.ItemHandlerResult;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
+import com.loomi.order_processor.domain.product.dto.ValidationResult;
 import com.loomi.order_processor.domain.product.entity.Product;
-import com.loomi.order_processor.domain.product.repository.ProductRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Subscription Product Handler Tests")
@@ -75,25 +72,32 @@ class SubscriptionProductValidationTest {
         return metadata;
     }
 
-    @Mock
-    private ProductRepository productRepository;
+    private Order createOrderContext(List<OrderItem> items) {
+        return Order.builder()
+                .id(UUID.randomUUID())
+                .customerId(testCustomerId)
+                .status(OrderStatus.PENDING)
+                .items(items != null ? items : new ArrayList<>())
+                .build();
+    }
 
     @Mock
     private OrderRepository orderRepository;
 
     @InjectMocks
-    private SubscriptionProductHandler subscriptionProductHandler;
+    private SubscriptionItemHandler subscriptionItemHandler;
 
     @Test
     @DisplayName("shouldReturnInternalError_whenProductNotFound")
     void shouldReturnInternalError_whenProductNotFound() {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
-        when(productRepository.findById(testProductId)).thenReturn(Optional.empty());
+        Product product = createProduct(true, null);
+        Order orderCtx = createOrderContext(List.of(item));
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertEquals(OrderError.INTERNAL_ERROR, result.getError());
+        assertTrue(result.getErrors().contains(OrderError.INTERNAL_ERROR.toString()));
     }
 
     @Test
@@ -102,12 +106,12 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
         Product product = createProduct(false, metadata);
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
+        Order orderCtx = createOrderContext(List.of(item));
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertEquals(OrderError.SUBSCRIPTION_NOT_AVAILABLE, result.getError());
+        assertTrue(result.getErrors().contains(OrderError.SUBSCRIPTION_NOT_AVAILABLE.toString()));
     }
 
     @Test
@@ -115,12 +119,12 @@ class SubscriptionProductValidationTest {
     void shouldReturnInternalError_whenMetadataIsNull() {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         Product product = createProduct(true, null);
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
+        Order orderCtx = createOrderContext(List.of(item));
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertEquals(OrderError.INTERNAL_ERROR, result.getError());
+        assertTrue(result.getErrors().contains(OrderError.INTERNAL_ERROR.toString()));
     }
 
     @Test
@@ -129,12 +133,12 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = new RawProductMetadata();
         Product product = createProduct(true, metadata);
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
+        Order orderCtx = createOrderContext(List.of(item));
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertEquals(OrderError.INTERNAL_ERROR, result.getError());
+        assertTrue(result.getErrors().contains(OrderError.INTERNAL_ERROR.toString()));
     }
 
     @Test
@@ -143,21 +147,21 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
         Product product = createProduct(true, metadata);
+        Order orderCtx = createOrderContext(List.of(item));
         Order existingOrder = Order.builder()
                 .id(UUID.randomUUID())
                 .customerId(testCustomerId)
                 .status(OrderStatus.PROCESSED)
                 .build();
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
         when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
                 testCustomerId, testGroupId))
                 .thenReturn(List.of(existingOrder));
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertEquals(OrderError.DUPLICATE_ACTIVE_SUBSCRIPTION, result.getError());
+        assertTrue(result.getErrors().contains(OrderError.DUPLICATE_ACTIVE_SUBSCRIPTION.toString()));
     }
 
     @Test
@@ -166,6 +170,7 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
         Product product = createProduct(true, metadata);
+        Order orderCtx = createOrderContext(List.of(item));
         List<Order> activeSubscriptions = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             activeSubscriptions.add(Order.builder()
@@ -175,17 +180,16 @@ class SubscriptionProductValidationTest {
                     .build());
         }
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
         when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
                 testCustomerId, testGroupId))
                 .thenReturn(new ArrayList<>());
         when(orderRepository.findAllActiveSubscriptionsByCustomerId(testCustomerId))
                 .thenReturn(activeSubscriptions);
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertEquals(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED, result.getError());
+        assertTrue(result.getErrors().contains(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString()));
     }
 
     @Test
@@ -194,6 +198,7 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
         Product product = createProduct(true, metadata);
+        Order orderCtx = createOrderContext(List.of(item));
         List<Order> activeSubscriptions = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
             activeSubscriptions.add(Order.builder()
@@ -203,17 +208,16 @@ class SubscriptionProductValidationTest {
                     .build());
         }
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
         when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
                 testCustomerId, testGroupId))
                 .thenReturn(new ArrayList<>());
         when(orderRepository.findAllActiveSubscriptionsByCustomerId(testCustomerId))
                 .thenReturn(activeSubscriptions);
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertEquals(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED, result.getError());
+        assertTrue(result.getErrors().contains(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString()));
     }
 
     @Test
@@ -222,15 +226,15 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
         Product product = createProduct(true, metadata);
+        Order orderCtx = createOrderContext(List.of(item));
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
         when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
                 testCustomerId, testGroupId))
                 .thenReturn(new ArrayList<>());
         when(orderRepository.findAllActiveSubscriptionsByCustomerId(testCustomerId))
                 .thenReturn(new ArrayList<>());
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertTrue(result.isValid());
     }
@@ -241,20 +245,20 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
         Product product = createProduct(true, metadata);
+        Order orderCtx = createOrderContext(List.of(item));
         Order existingOrder = Order.builder()
                 .id(UUID.randomUUID())
                 .customerId(testCustomerId)
                 .status(OrderStatus.PROCESSED)
                 .build();
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
         when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
                 testCustomerId, testGroupId))
                 .thenReturn(new ArrayList<>());
         when(orderRepository.findAllActiveSubscriptionsByCustomerId(testCustomerId))
                 .thenReturn(List.of(existingOrder));
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertTrue(result.isValid());
     }
@@ -265,6 +269,7 @@ class SubscriptionProductValidationTest {
         OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
         Product product = createProduct(true, metadata);
+        Order orderCtx = createOrderContext(List.of(item));
         List<Order> activeSubscriptions = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             activeSubscriptions.add(Order.builder()
@@ -274,16 +279,30 @@ class SubscriptionProductValidationTest {
                     .build());
         }
 
-        when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
         when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
                 testCustomerId, testGroupId))
                 .thenReturn(new ArrayList<>());
         when(orderRepository.findAllActiveSubscriptionsByCustomerId(testCustomerId))
                 .thenReturn(activeSubscriptions);
 
-        ItemHandlerResult result = subscriptionProductHandler.handle(item);
+        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertTrue(result.isValid());
+    }
+
+    @Test
+    @DisplayName("shouldReturnIncompatibleSubscriptions_whenSameGroupInOrder")
+    void shouldReturnIncompatibleSubscriptions_whenSameGroupInOrder() {
+        RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
+        OrderItem item1 = createOrderItem(testCustomerId, metadata);
+        OrderItem item2 = createOrderItem(testCustomerId, metadata);
+        Product product = createProduct(true, metadata);
+        Order orderCtx = createOrderContext(List.of(item1, item2));
+
+        ValidationResult result = subscriptionItemHandler.validate(item1, product, orderCtx);
+
+        assertFalse(result.isValid());
+        assertTrue(result.getErrors().contains(OrderError.INCOMPATIBLE_SUBSCRIPTIONS.toString()));
     }
 }
 
