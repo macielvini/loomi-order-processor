@@ -12,16 +12,16 @@ import com.loomi.order_processor.domain.payment.service.FraudService;
 public class FraudServiceImpl implements FraudService {
 
     @Override
-    public boolean validateOrder(Order order) {
+    public boolean isFraud(Order order) {
         var fraudProbability = 0.05; // 5%
         var minOrderValueToValidate =  BigDecimal.valueOf(20000.00);
 
         if(order.totalAmount().compareTo(minOrderValueToValidate) > 0) {
             var random = new Random().nextDouble();
-            return random > fraudProbability;
+            return random <= fraudProbability;
         }
         
-        return true;
+        return false;
     }
     
 }
