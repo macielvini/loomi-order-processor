@@ -9,17 +9,14 @@ public class OrderProcessResult {
     private boolean isProcessed;
     @Getter
     private List<String> errors;
-    @Getter
-    private boolean isHumanReviewRequired;
 
-    private OrderProcessResult(boolean isProcessed, List<String> errors, boolean requiresAnalysis) {
+    private OrderProcessResult(boolean isProcessed, List<String> errors) {
         this.isProcessed = isProcessed;
         this.errors = errors;
-        this.isHumanReviewRequired = requiresAnalysis;
     }
 
     public boolean isProcessed() {
-        return isProcessed && !isHumanReviewRequired;
+        return isProcessed;
     }
 
     public boolean isFailed() {
@@ -27,18 +24,14 @@ public class OrderProcessResult {
     }
 
     public static OrderProcessResult ok() {
-        return new OrderProcessResult(true, null, false);
+        return new OrderProcessResult(true, null);
     }
 
     public static OrderProcessResult fail(String... errors) {
-        return new OrderProcessResult(false, Arrays.asList(errors), false);
+        return new OrderProcessResult(false, Arrays.asList(errors));
     }
 
     public static OrderProcessResult fail(List<String> errors) {
-        return new OrderProcessResult(false, errors, false);
-    }
-
-    public static OrderProcessResult requireHumanReview() {
-        return new OrderProcessResult(false, null, true);
+        return new OrderProcessResult(false, errors);
     }
 }
