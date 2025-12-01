@@ -26,8 +26,13 @@ public class DigitalProductHandler implements ItemHandler {
     private final OrderRepository orderRepository;
     private final EmailService emailService;
 
+    private static int MAX_LICENSE_PER_ORDER_ITEM = 1;
+
     @Override
     public ItemHandlerResult handle(OrderItem item) {
+        // Set to ONE license per order item
+        item.quantity(MAX_LICENSE_PER_ORDER_ITEM); 
+
         var optProduct = productRepository.findById(item.productId());
         if (optProduct.isEmpty()) {
             log.error("Product not found: {}", item.productId());
