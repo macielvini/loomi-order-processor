@@ -37,7 +37,7 @@ public class DeliveryService {
         int deliveryDays = DELIVERY_DAYS_BY_LOCATION.getOrDefault(normalized, DEFAULT_DELIVERY_DAYS);
         
         if (!WAREHOUSE_LOCATIONS.contains(normalized)) {
-            log.warn("Invalid warehouse location '{}', using default delivery days: {}", warehouseLocation, DEFAULT_DELIVERY_DAYS);
+            log.error("Invalid warehouse location '{}', using default delivery days: {}", warehouseLocation, DEFAULT_DELIVERY_DAYS);
         }
         
         return deliveryDays;
