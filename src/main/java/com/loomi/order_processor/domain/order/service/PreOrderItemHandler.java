@@ -33,12 +33,12 @@ public class PreOrderItemHandler implements OrderItemHandler {
 
     private Optional<LocalDate> extractReleaseDate(Product product) {
         if (product.metadata() == null || product.metadata().get("releaseDate") == null) {
-            throw new IllegalArgumentException("Missing releaseDate in product metadata");
+            return Optional.empty();
         }
 
         String releaseDateStr = product.metadata().get("releaseDate").toString();
         if (StringUtils.isBlank(releaseDateStr)) {
-            throw new IllegalArgumentException("Empty releaseDate in product metadata");
+            return Optional.empty();
         }
 
         try {
