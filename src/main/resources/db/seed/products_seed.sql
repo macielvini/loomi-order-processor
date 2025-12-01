@@ -23,18 +23,13 @@ INSERT INTO products (id, name, product_type, price, stock_quantity, is_active, 
 
 -- Pré-venda
 INSERT INTO products (id, name, product_type, price, stock_quantity, is_active, metadata) VALUES
-  (gen_random_uuid(), 'Epic Game 2025',  'PRE_ORDER',  249.90, NULL, true,
-   '{"productId": "GAME-2025-001", "releaseDate": "2025-06-01", "preOrderSlots": 1000}'),
-  (gen_random_uuid(), 'PlayStation 6',   'PRE_ORDER', 4999.00, NULL, true,
-   '{"productId": "PRE-PS6-001", "releaseDate": "2025-11-15", "preOrderSlots": 500}'),
-  (gen_random_uuid(), 'iPhone 16 Pro',   'PRE_ORDER', 7999.00, NULL, true,
-   '{"productId": "PRE-IPHONE16-001", "releaseDate": "2025-09-20", "preOrderSlots": 2000}');
+  (gen_random_uuid(), 'Epic Game 2025',  'PRE_ORDER',  249.90, 1000,  true,   '{"releaseDate": "2025-06-01"}'),
+  (gen_random_uuid(), 'PlayStation 6',   'PRE_ORDER', 4999.00, 500,   true,   '{"releaseDate": "2025-11-15"}'),
+  (gen_random_uuid(), 'iPhone 16 Pro',   'PRE_ORDER', 7999.00, 2000,  true,   '{"releaseDate": "2025-09-20"}');
 
 -- Corporativo
 INSERT INTO products (id, name, product_type, price, stock_quantity, is_active, metadata) VALUES
-  (gen_random_uuid(), 'Enterprise License',   'CORPORATE', 15000.00, NULL, true,
-   '{"productId": "CORP-LICENSE-ENT"}'),
-  (gen_random_uuid(), 'Ergonomic Chair Bulk', 'CORPORATE',   899.00, 500, true,
-   '{"productId": "CORP-CHAIR-ERG-001"}');
+  (gen_random_uuid(), 'Enterprise License',   'CORPORATE', 15000.00, NULL,  true, '{}'),
+  (gen_random_uuid(), 'Ergonomic Chair Bulk', 'CORPORATE',   899.00, 500,   true, '{}');
 
 
