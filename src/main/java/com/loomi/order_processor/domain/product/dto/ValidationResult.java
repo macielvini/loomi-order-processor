@@ -7,19 +7,29 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class ValidationResult {
-    private final boolean valid;
     private final List<String> errors;
+    private boolean isHumanReviewRequired;
 
 
     public static ValidationResult ok() { 
-        return new ValidationResult(true, List.of()); 
+        return new ValidationResult(List.of(), false); 
     }
 
     public static ValidationResult fail(String... errors) {
-        return new ValidationResult(false, Arrays.asList(errors));
+        return new ValidationResult(Arrays.asList(errors), false);
     }
-    
-    public boolean isValid() { return valid; }
+
+    public static ValidationResult fail(List<String> errors) {
+        return new ValidationResult(errors, false);
+    }
+
+    public static ValidationResult requireHumanReview() {
+        return new ValidationResult(null, true);
+    }
+
+    public boolean isValid() { return errors == null || errors.isEmpty(); }
+
+    public boolean isHumanReviewRequired() { return isHumanReviewRequired; }
     
     public List<String> getErrors() { return errors; }
 }
