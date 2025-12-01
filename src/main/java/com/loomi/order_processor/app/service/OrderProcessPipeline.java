@@ -64,6 +64,10 @@ public class OrderProcessPipeline {
             if (!validation.isValid()) {
                 return ValidationResult.fail(validation.getErrors());
             }
+
+            if (validation.isHumanReviewRequired()) {
+                return ValidationResult.requireHumanReview();
+            }
         }
 
         return ValidationResult.ok();
