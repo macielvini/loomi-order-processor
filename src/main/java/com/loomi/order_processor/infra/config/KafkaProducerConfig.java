@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loomi.order_processor.domain.order.entity.LowStockAlertEvent;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
+import com.loomi.order_processor.domain.order.entity.OrderPendingApprovalEvent;
 import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 
 @Configuration
@@ -42,6 +43,9 @@ public class KafkaProducerConfig {
 
     @Value("${kafka.topics.low-stock-alert}")
     private String lowStockAlertTopic;
+
+    @Value("${kafka.topics.order-pending-approval}")
+    private String orderPendingApprovalTopic;
 
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
@@ -71,6 +75,11 @@ public class KafkaProducerConfig {
     @Bean
     NewTopic lowStockAlertTopic() {
         return new NewTopic(lowStockAlertTopic, 1, (short) 1);
+    }
+
+    @Bean
+    NewTopic orderPendingApprovalTopic() {
+        return new NewTopic(orderPendingApprovalTopic, 1, (short) 1);
     }
 
     @Bean
@@ -118,6 +127,17 @@ public class KafkaProducerConfig {
     }
 
     @Bean
+    ProducerFactory<String, OrderPendingApprovalEvent> orderPendingApprovalProducerFactory(ObjectMapper objectMapper) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(
+                props,
+                new StringSerializer(),
+                new JsonSerializer<>(objectMapper));
+    }
+
+    @Bean
     KafkaTemplate<String, OrderCreatedEvent> orderCreatedKafkaTemplate(
             ProducerFactory<String, OrderCreatedEvent> pf) {
         return new KafkaTemplate<>(pf);
@@ -138,6 +158,12 @@ public class KafkaProducerConfig {
     @Bean
     KafkaTemplate<String, LowStockAlertEvent> lowStockAlertKafkaTemplate(
             ProducerFactory<String, LowStockAlertEvent> pf) {
+        return new KafkaTemplate<>(pf);
+    }
+
+    @Bean
+    KafkaTemplate<String, OrderPendingApprovalEvent> orderPendingApprovalKafkaTemplate(
+            ProducerFactory<String, OrderPendingApprovalEvent> pf) {
         return new KafkaTemplate<>(pf);
     }
 }
