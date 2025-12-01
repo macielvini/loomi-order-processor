@@ -45,6 +45,8 @@ class PhysicalProductValidationTest {
     @Mock
     private AlertProducer alertProducer;
 
+    private DeliveryService deliveryService;
+
     @InjectMocks
     private PhysicalItemHandler physicalItemHandler;
 
@@ -52,6 +54,8 @@ class PhysicalProductValidationTest {
     void setUp() {
         testProductId = UUID.randomUUID();
         testOrderId = UUID.randomUUID();
+        deliveryService = new DeliveryService();
+        physicalItemHandler = new PhysicalItemHandler(productRepository, alertProducer, deliveryService);
     }
 
     private OrderItem createOrderItem(int quantity, RawProductMetadata metadata) {
