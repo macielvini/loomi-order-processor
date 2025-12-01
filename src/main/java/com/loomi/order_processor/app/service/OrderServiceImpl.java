@@ -19,6 +19,7 @@ import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.service.OrderService;
+import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.exception.ProductIsNotActiveException;
 import com.loomi.order_processor.domain.product.exception.ProductNotFoundException;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
@@ -72,11 +73,15 @@ public class OrderServiceImpl implements OrderService {
                 throw new ProductIsNotActiveException(product.id());
             }
 
+            var mergedMetadata = new RawProductMetadata();
+            mergedMetadata.putAll(product.metadata());
+            mergedMetadata.putAll(item.metadata());
+
             orderItems.add(OrderItem.fromProduct(
                     product,
                     createOrder.customerId(),
                     item.quantity(),
-                    item.metadata()));
+                    mergedMetadata));
         }
 
         var totalAmount = orderItems.stream()
