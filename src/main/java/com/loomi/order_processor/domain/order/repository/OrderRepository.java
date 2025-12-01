@@ -20,5 +20,9 @@ public interface OrderRepository {
     void update(Order order);
 
     List<Order> findByCustomerIdAndProductIdAndStatus(String customerId, UUID productId, OrderStatus status);
+
+    List<Order> findActiveSubscriptionsByCustomerIdAndGroupId(String customerId, String groupId);
+
+    List<Order> findAllActiveSubscriptionsByCustomerId(String customerId);
 }
 

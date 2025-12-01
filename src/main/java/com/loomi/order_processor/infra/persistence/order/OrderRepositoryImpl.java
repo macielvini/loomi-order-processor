@@ -54,6 +54,23 @@ public class OrderRepositoryImpl implements OrderRepository {
                         .anyMatch(item -> item.productId().equals(productId)))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Order> findActiveSubscriptionsByCustomerIdAndGroupId(String customerId, String groupId) {
+        return jpaOrderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
+                customerId, 
+                OrderStatus.PROCESSED.name(), 
+                groupId
+        );
+    }
+
+    @Override
+    public List<Order> findAllActiveSubscriptionsByCustomerId(String customerId) {
+        return jpaOrderRepository.findActiveSubscriptionsByCustomerId(
+                customerId, 
+                OrderStatus.PROCESSED.name()
+        );
+    }
     
 }
 
