@@ -1,5 +1,6 @@
 package com.loomi.order_processor.domain.order.service;
 
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -85,6 +86,9 @@ public class SubscriptionItemHandler implements OrderItemHandler {
         if (subscriptionCount >= MAX_ACTIVE_SUBSCRIPTIONS) {
             return ValidationResult.fail(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString());
         }
+
+        log.info("Subscription item {} from order {} payment scheduled to {}", 
+        item.productId(), ctx.id(), LocalDateTime.now().plusMonths(1));
 
         return ValidationResult.ok();
     }
