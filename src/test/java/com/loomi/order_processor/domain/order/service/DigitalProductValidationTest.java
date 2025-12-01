@@ -25,7 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.loomi.order_processor.domain.notification.service.EmailService;
-import com.loomi.order_processor.domain.order.dto.ItemHandlerError;
+import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.ItemHandlerResult;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
@@ -101,7 +101,7 @@ class DigitalProductValidationTest {
         ItemHandlerResult result = digitalProductHandler.handle(item);
 
         assertFalse(result.isValid());
-        assertEquals(ItemHandlerError.INTERNAL_ERROR, result.getError());
+        assertEquals(OrderError.INTERNAL_ERROR, result.getError());
         verify(productRepository).findById(testProductId);
         verify(productRepository, never()).update(any());
         verify(orderRepository, never()).findByCustomerIdAndProductIdAndStatus(any(), any(), any());
@@ -118,7 +118,7 @@ class DigitalProductValidationTest {
         ItemHandlerResult result = digitalProductHandler.handle(item);
 
         assertFalse(result.isValid());
-        assertEquals(ItemHandlerError.DISTRIBUTION_RIGHTS_EXPIRED, result.getError());
+        assertEquals(OrderError.DISTRIBUTION_RIGHTS_EXPIRED, result.getError());
         verify(productRepository).findById(testProductId);
         verify(productRepository, never()).update(any());
         verify(orderRepository, never()).findByCustomerIdAndProductIdAndStatus(any(), any(), any());
@@ -135,7 +135,7 @@ class DigitalProductValidationTest {
         ItemHandlerResult result = digitalProductHandler.handle(item);
 
         assertFalse(result.isValid());
-        assertEquals(ItemHandlerError.LICENSE_UNAVAILABLE, result.getError());
+        assertEquals(OrderError.LICENSE_UNAVAILABLE, result.getError());
         verify(productRepository).findById(testProductId);
         verify(productRepository, never()).update(any());
         verify(orderRepository, never()).findByCustomerIdAndProductIdAndStatus(any(), any(), any());
@@ -152,7 +152,7 @@ class DigitalProductValidationTest {
         ItemHandlerResult result = digitalProductHandler.handle(item);
 
         assertFalse(result.isValid());
-        assertEquals(ItemHandlerError.LICENSE_UNAVAILABLE, result.getError());
+        assertEquals(OrderError.LICENSE_UNAVAILABLE, result.getError());
         verify(productRepository).findById(testProductId);
         verify(productRepository, never()).update(any());
         verify(orderRepository, never()).findByCustomerIdAndProductIdAndStatus(any(), any(), any());
@@ -178,7 +178,7 @@ class DigitalProductValidationTest {
         ItemHandlerResult result = digitalProductHandler.handle(item);
 
         assertFalse(result.isValid());
-        assertEquals(ItemHandlerError.ALREADY_OWNED, result.getError());
+        assertEquals(OrderError.ALREADY_OWNED, result.getError());
         verify(productRepository).findById(testProductId);
         verify(orderRepository).findByCustomerIdAndProductIdAndStatus(
                 testCustomerId, testProductId, OrderStatus.PROCESSED);

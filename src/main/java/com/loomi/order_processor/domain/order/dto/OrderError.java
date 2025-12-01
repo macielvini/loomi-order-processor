@@ -1,6 +1,6 @@
 package com.loomi.order_processor.domain.order.dto;
 
-public enum ItemHandlerError {
+public enum OrderError {
     OUT_OF_STOCK,
     INTERNAL_ERROR,
     WAREHOUSE_UNAVAILABLE,

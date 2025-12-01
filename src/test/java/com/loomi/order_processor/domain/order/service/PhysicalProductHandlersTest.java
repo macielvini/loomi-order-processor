@@ -22,7 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.loomi.order_processor.domain.order.dto.ItemHandlerError;
+import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.ItemHandlerResult;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.entity.LowStockAlertEvent;
@@ -95,7 +95,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = stockHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.INTERNAL_ERROR, result.getError());
+            assertEquals(OrderError.INTERNAL_ERROR, result.getError());
             verify(productRepository).findById(testProductId);
             verify(alertProducer, never()).sendLowStockAlert(any());
         }
@@ -110,7 +110,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = stockHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.OUT_OF_STOCK, result.getError());
+            assertEquals(OrderError.OUT_OF_STOCK, result.getError());
             verify(productRepository).findById(testProductId);
             verify(productRepository, never()).update(any());
             verify(alertProducer, never()).sendLowStockAlert(any());
@@ -126,7 +126,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = stockHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.OUT_OF_STOCK, result.getError());
+            assertEquals(OrderError.OUT_OF_STOCK, result.getError());
             verify(productRepository).findById(testProductId);
             verify(productRepository, never()).update(any());
             verify(alertProducer, never()).sendLowStockAlert(any());
@@ -142,7 +142,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = stockHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.OUT_OF_STOCK, result.getError());
+            assertEquals(OrderError.OUT_OF_STOCK, result.getError());
             verify(productRepository).findById(testProductId);
             verify(productRepository, never()).update(any());
             verify(alertProducer, never()).sendLowStockAlert(any());
@@ -348,7 +348,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = warehouseValidationHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.WAREHOUSE_UNAVAILABLE, result.getError());
+            assertEquals(OrderError.WAREHOUSE_UNAVAILABLE, result.getError());
         }
 
         @Test
@@ -359,7 +359,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = warehouseValidationHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.WAREHOUSE_UNAVAILABLE, result.getError());
+            assertEquals(OrderError.WAREHOUSE_UNAVAILABLE, result.getError());
         }
 
         @Test
@@ -370,7 +370,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = warehouseValidationHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.WAREHOUSE_UNAVAILABLE, result.getError());
+            assertEquals(OrderError.WAREHOUSE_UNAVAILABLE, result.getError());
         }
 
         @Test
@@ -381,7 +381,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = warehouseValidationHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.WAREHOUSE_UNAVAILABLE, result.getError());
+            assertEquals(OrderError.WAREHOUSE_UNAVAILABLE, result.getError());
         }
 
         @Test
@@ -392,7 +392,7 @@ class PhysicalProductHandlersTest {
             ItemHandlerResult result = warehouseValidationHandler.handle(item);
 
             assertFalse(result.isValid());
-            assertEquals(ItemHandlerError.WAREHOUSE_UNAVAILABLE, result.getError());
+            assertEquals(OrderError.WAREHOUSE_UNAVAILABLE, result.getError());
         }
 
         @Test

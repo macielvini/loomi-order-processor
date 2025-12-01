@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.notification.service.EmailService;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
-import com.loomi.order_processor.domain.order.dto.ItemHandlerError;
+import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.ItemHandlerResult;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
@@ -36,19 +36,19 @@ public class DigitalProductHandler implements ItemHandler {
         var optProduct = productRepository.findById(item.productId());
         if (optProduct.isEmpty()) {
             log.error("Product not found: {}", item.productId());
-            return ItemHandlerResult.error(ItemHandlerError.INTERNAL_ERROR);
+            return ItemHandlerResult.error(OrderError.INTERNAL_ERROR);
         }
 
         var product = optProduct.get();
 
         // Check distribution rights are still valid
         if (!product.isActive()) {
-            return ItemHandlerResult.error(ItemHandlerError.DISTRIBUTION_RIGHTS_EXPIRED);
+            return ItemHandlerResult.error(OrderError.DISTRIBUTION_RIGHTS_EXPIRED);
         }
 
         // Check license availability
         if (product.stockQuantity() == null || product.stockQuantity() < item.quantity()) {
-            return ItemHandlerResult.error(ItemHandlerError.LICENSE_UNAVAILABLE);
+            return ItemHandlerResult.error(OrderError.LICENSE_UNAVAILABLE);
         }
 
         var existingOrders = orderRepository.findByCustomerIdAndProductIdAndStatus(
@@ -57,7 +57,7 @@ public class DigitalProductHandler implements ItemHandler {
                 OrderStatus.PROCESSED);
 
         if (!existingOrders.isEmpty()) {
-            return ItemHandlerResult.error(ItemHandlerError.ALREADY_OWNED);
+            return ItemHandlerResult.error(OrderError.ALREADY_OWNED);
         }
 
         int currentStock = product.stockQuantity();

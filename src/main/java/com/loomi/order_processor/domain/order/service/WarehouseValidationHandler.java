@@ -5,7 +5,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderItem;
-import com.loomi.order_processor.domain.order.dto.ItemHandlerError;
+import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.ItemHandlerResult;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 
@@ -22,24 +22,24 @@ public class WarehouseValidationHandler implements ItemHandler {
     public ItemHandlerResult handle(OrderItem item) {
         if (item.metadata() == null) {
             log.warn("Missing metadata for product {}", item.productId());
-            return ItemHandlerResult.error(ItemHandlerError.WAREHOUSE_UNAVAILABLE);
+            return ItemHandlerResult.error(OrderError.WAREHOUSE_UNAVAILABLE);
         }
 
         var warehouseLocation = item.metadata().get("warehouseLocation");
 
         if (warehouseLocation == null) {
             log.warn("Missing warehouseLocation in metadata for product {}", item.productId());
-            return ItemHandlerResult.error(ItemHandlerError.WAREHOUSE_UNAVAILABLE);
+            return ItemHandlerResult.error(OrderError.WAREHOUSE_UNAVAILABLE);
         }
 
         String location = warehouseLocation.toString().trim().toUpperCase();
         if (location.isEmpty()) {
             log.warn("Empty warehouseLocation in metadata for product {}", item.productId());
-            return ItemHandlerResult.error(ItemHandlerError.WAREHOUSE_UNAVAILABLE);
+            return ItemHandlerResult.error(OrderError.WAREHOUSE_UNAVAILABLE);
         }
         if (!WAREHOUSE_LOCATIONS.contains(location)) {
             log.warn("Invalid warehouseLocation in metadata for product {}", item.productId());
-            return ItemHandlerResult.error(ItemHandlerError.WAREHOUSE_UNAVAILABLE);
+            return ItemHandlerResult.error(OrderError.WAREHOUSE_UNAVAILABLE);
         }
 
         log.debug("Warehouse location validated for product {}: {}", item.productId(), location);
