@@ -27,9 +27,9 @@ public class PaymentOrderHandler implements OrderHandler {
             return ValidationResult.fail(OrderError.INTERNAL_ERROR.toString());
         }
 
-        boolean isFraudValid = fraudService.isFraud(order);
+        boolean isFraud = fraudService.isFraud(order);
         
-        if (!isFraudValid) {
+        if (isFraud) {
             log.warn("Order {} flagged for fraud review: totalAmount={}", order.id(), order.totalAmount());
             return ValidationResult.requireHumanReview();
         }
