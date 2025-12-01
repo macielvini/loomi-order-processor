@@ -1,5 +1,6 @@
 package com.loomi.order_processor.infra.consumer;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.kafka.annotation.KafkaListener;
@@ -27,6 +28,15 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
     private final OrderProducer producer;
     private final OrderProcessPipeline pipeline;
 
+    private OrderFailedEvent buildFailedEvent(UUID orderId, List<String> errors) {
+        return OrderFailedEvent.fromOrder(orderId, String.join(", ", errors));
+    }
+
+
+    private OrderFailedEvent buildFailedEvent(UUID orderId, String error) {
+        return OrderFailedEvent.fromOrder(orderId, error);
+    }
+
     @KafkaListener(topics = "${kafka.topics.order-created}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "orderCreatedListenerFactory")
     @Transactional
     public void handler(OrderCreatedEvent event) {
@@ -40,8 +50,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
                 order.status(OrderStatus.FAILED);
                 orderRepository.update(order);
                 log.error("Order {} failed with reason: {}", orderId, validations.getErrors());
-                var failedEvent = OrderFailedEvent.fromOrder(orderId, validations.getErrors().toString());
-                producer.sendOrderFailedEvent(failedEvent);
+                producer.sendOrderFailedEvent(buildFailedEvent(orderId, validations.getErrors()));
                 return;
             }
 
@@ -49,8 +58,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
                 order.status(OrderStatus.PENDING_APPROVAL);
                 orderRepository.update(order);
                 log.info("Order {} requires manual approval", orderId);
-                var failedEvent = OrderFailedEvent.fromOrder(orderId, OrderError.PENDING_MANUAL_APPROVAL.toString());
-                producer.sendOrderFailedEvent(failedEvent);
+                producer.sendOrderFailedEvent(buildFailedEvent(orderId, OrderError.PENDING_MANUAL_APPROVAL.toString()));
                 return;
             }
 
@@ -60,8 +68,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
                 order.status(OrderStatus.FAILED);
                 orderRepository.update(order);
                 log.error("Order {} failed with reason: {}", orderId, processResult.getErrors());
-                var failedEvent = OrderFailedEvent.fromOrder(orderId, processResult.getErrors().toString());
-                producer.sendOrderFailedEvent(failedEvent);
+                producer.sendOrderFailedEvent(buildFailedEvent(orderId, processResult.getErrors()));
                 return;
             }
 
@@ -73,8 +80,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
             return;
         } catch (Exception e) {
             log.error("Error processing order {}: {}", orderId, e.getMessage(), e);
-            var failedEvent = OrderFailedEvent.fromOrder(orderId, OrderError.INTERNAL_ERROR.toString());
-            producer.sendOrderFailedEvent(failedEvent);
+            producer.sendOrderFailedEvent(buildFailedEvent(orderId, OrderError.INTERNAL_ERROR.toString()));
         }
     }
 
