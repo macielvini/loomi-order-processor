@@ -19,7 +19,7 @@ import com.loomi.order_processor.domain.product.exception.ProductNotFoundExcepti
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
 
 @Component
-public class OrderProcessPipeline  {
+public class OrderProcessPipeline {
 
     private final List<OrderHandler> globalHandlers;
     private final Map<ProductType, OrderItemHandler> byTypeHandlers;
@@ -32,24 +32,17 @@ public class OrderProcessPipeline  {
         this.globalHandlers = globalHandlers;
         this.productRepository = productRepository;
         this.byTypeHandlers = handlers.stream()
-            .collect(Collectors.toMap(OrderItemHandler::supportedType, Function.identity()));
+                .collect(Collectors.toMap(OrderItemHandler::supportedType, Function.identity()));
     }
-
 
     private OrderItemHandler getHandlerFor(OrderItem item) {
         return byTypeHandlers.get(item.productType());
     }
 
     public ValidationResult validate(Order order) {
-        for(var handler : globalHandlers) {
-            var validation = handler.validate(order);
-            if (!validation.isValid()) {
-                return ValidationResult.fail(validation.getErrors());
-            }
-        }
-
-        for(var item : order.items()) {
-            var product = productRepository.findById(item.productId()).orElseThrow(() -> new ProductNotFoundException(item.productId()));
+        for (var item : order.items()) {
+            var product = productRepository.findById(item.productId())
+                    .orElseThrow(() -> new ProductNotFoundException(item.productId()));
             var productHandler = getHandlerFor(item);
 
             if (productHandler == null) {
@@ -65,12 +58,21 @@ public class OrderProcessPipeline  {
                 return ValidationResult.requireHumanReview();
             }
         }
+
+        for (var handler : globalHandlers) {
+            var validation = handler.validate(order);
+            if (!validation.isValid()) {
+                return ValidationResult.fail(validation.getErrors());
+            }
+        }
+
         return ValidationResult.ok();
     }
 
     public OrderProcessResult process(Order order) {
-        for(var item : order.items()) {
-            var product = productRepository.findById(item.productId()).orElseThrow(() -> new ProductNotFoundException(item.productId()));
+        for (var item : order.items()) {
+            var product = productRepository.findById(item.productId())
+                    .orElseThrow(() -> new ProductNotFoundException(item.productId()));
             var productHandler = byTypeHandlers.get(item.productType());
 
             if (productHandler == null) {
@@ -79,6 +81,13 @@ public class OrderProcessPipeline  {
 
             var processResult = productHandler.process(item, product, order);
 
+            if (!processResult.isProcessed()) {
+                return OrderProcessResult.fail(processResult.getErrors());
+            }
+        }
+
+        for (var handler : globalHandlers) {
+            var processResult = handler.process(order);
             if (!processResult.isProcessed()) {
                 return OrderProcessResult.fail(processResult.getErrors());
             }
