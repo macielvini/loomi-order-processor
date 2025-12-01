@@ -62,7 +62,8 @@ public class PreOrderItemHandler implements OrderItemHandler {
 
         var optReleaseDate = extractReleaseDate(product);
         if (optReleaseDate.isEmpty()) {
-            log.error("Failed to extract releaseDate for product {} in order {}: {}", item.productId(), ctx.id());
+            log.error("Failed to extract releaseDate for product {} in order {}",
+                    item.productId(), ctx.id());
             return ValidationResult.fail(OrderError.INVALID_RELEASE_DATE.toString());
         }
         LocalDate releaseDate = optReleaseDate.get();
@@ -83,7 +84,8 @@ public class PreOrderItemHandler implements OrderItemHandler {
     public OrderProcessResult process(OrderItem item, Product product, Order ctx) {
         var optReleaseDate = extractReleaseDate(product);
         if (optReleaseDate.isEmpty()) {
-            log.error("Failed to extract releaseDate for product {} in order {}: {}", item.productId(), ctx.id());
+            log.error("Failed to extract releaseDate for product {} in order {}",
+                    item.productId(), ctx.id());
             return OrderProcessResult.fail(OrderError.INVALID_RELEASE_DATE.toString());
         }
         LocalDate releaseDate = optReleaseDate.get();
