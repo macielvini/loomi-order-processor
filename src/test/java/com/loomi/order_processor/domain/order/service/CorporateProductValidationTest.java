@@ -338,29 +338,30 @@ class CorporateProductValidationTest {
     class ProcessTests {
 
         @Test
-        @DisplayName("shouldApplyVolumeDiscount_whenTotalCorporateQuantityExceedsThreshold")
-        void shouldApplyVolumeDiscount_whenTotalCorporateQuantityExceedsThreshold() {
-            BigDecimal price = BigDecimal.valueOf(1000.00);
-            OrderItem item1 = createOrderItem(60, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            OrderItem item2 = createOrderItem(50, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            List<OrderItem> items = List.of(item1, item2);
-            Order order = createOrderWithMultipleItems(items, BigDecimal.valueOf(110000.00));
+        @DisplayName("shouldApplyVolumeDiscount_whenQuantityExceedsThresholdWithSingleBlock")
+        void shouldApplyVolumeDiscount_whenQuantityExceedsThresholdWithSingleBlock() {
+            BigDecimal price = BigDecimal.valueOf(10.00);
+            OrderItem item = createOrderItem(150, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            Order order = createOrder(item, BigDecimal.valueOf(1500.00));
             Product product = createProduct(true);
 
-            OrderProcessResult result = corporateItemHandler.process(item1, product, order);
+            OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
             assertTrue(result.isProcessed());
-            assertTrue(item1.metadata().containsKey("discountAmount"));
-            BigDecimal discountAmount = (BigDecimal) item1.metadata().get("discountAmount");
-            assertEquals(price.multiply(BigDecimal.valueOf(0.15)), discountAmount);
+            assertTrue(item.metadata().containsKey("discountAmount"));
+            BigDecimal discountAmount = (BigDecimal) item.metadata().get("discountAmount");
+            BigDecimal expectedDiscount = price
+                    .multiply(BigDecimal.valueOf(100))
+                    .multiply(BigDecimal.valueOf(0.15));
+            assertEquals(expectedDiscount, discountAmount);
         }
 
         @Test
-        @DisplayName("shouldNotApplyVolumeDiscount_whenTotalCorporateQuantityIsBelowThreshold")
-        void shouldNotApplyVolumeDiscount_whenTotalCorporateQuantityIsBelowThreshold() {
-            BigDecimal price = BigDecimal.valueOf(1000.00);
+        @DisplayName("shouldNotApplyVolumeDiscount_whenQuantityIsBelowThreshold")
+        void shouldNotApplyVolumeDiscount_whenQuantityIsBelowThreshold() {
+            BigDecimal price = BigDecimal.valueOf(10.00);
             OrderItem item = createOrderItem(50, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            Order order = createOrder(item, BigDecimal.valueOf(50000.00));
+            Order order = createOrder(item, BigDecimal.valueOf(500.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
@@ -370,45 +371,50 @@ class CorporateProductValidationTest {
         }
 
         @Test
-        @DisplayName("shouldNotApplyVolumeDiscount_whenTotalCorporateQuantityEqualsThreshold")
-        void shouldNotApplyVolumeDiscount_whenTotalCorporateQuantityEqualsThreshold() {
-            BigDecimal price = BigDecimal.valueOf(1000.00);
+        @DisplayName("shouldApplyVolumeDiscount_whenQuantityEqualsThreshold")
+        void shouldApplyVolumeDiscount_whenQuantityEqualsThreshold() {
+            BigDecimal price = BigDecimal.valueOf(10.00);
             OrderItem item = createOrderItem(100, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            Order order = createOrder(item, BigDecimal.valueOf(100000.00));
+            Order order = createOrder(item, BigDecimal.valueOf(1000.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
             assertTrue(result.isProcessed());
-            assertFalse(item.metadata().containsKey("discountAmount"));
+            assertTrue(item.metadata().containsKey("discountAmount"));
+            BigDecimal discountAmount = (BigDecimal) item.metadata().get("discountAmount");
+            BigDecimal expectedDiscount = price
+                    .multiply(BigDecimal.valueOf(100))
+                    .multiply(BigDecimal.valueOf(0.15));
+            assertEquals(expectedDiscount, discountAmount);
         }
 
         @Test
-        @DisplayName("shouldCalculateDiscountCorrectly_whenVolumeDiscountApplies")
-        void shouldCalculateDiscountCorrectly_whenVolumeDiscountApplies() {
-            BigDecimal price = BigDecimal.valueOf(1000.00);
-            BigDecimal expectedDiscount = price.multiply(BigDecimal.valueOf(0.15));
-            OrderItem item1 = createOrderItem(60, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            OrderItem item2 = createOrderItem(50, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            List<OrderItem> items = List.of(item1, item2);
-            Order order = createOrderWithMultipleItems(items, BigDecimal.valueOf(110000.00));
+        @DisplayName("shouldCalculateDiscountCorrectly_whenQuantityHasTwoBlocks")
+        void shouldCalculateDiscountCorrectly_whenQuantityHasTwoBlocks() {
+            BigDecimal price = BigDecimal.valueOf(10.00);
+            OrderItem item = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            Order order = createOrder(item, BigDecimal.valueOf(2500.00));
             Product product = createProduct(true);
 
-            OrderProcessResult result = corporateItemHandler.process(item1, product, order);
+            OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
             assertTrue(result.isProcessed());
-            BigDecimal discountAmount = (BigDecimal) item1.metadata().get("discountAmount");
+            BigDecimal discountAmount = (BigDecimal) item.metadata().get("discountAmount");
+            BigDecimal expectedDiscount = price
+                    .multiply(BigDecimal.valueOf(200))
+                    .multiply(BigDecimal.valueOf(0.15));
             assertEquals(expectedDiscount, discountAmount);
         }
 
         @Test
         @DisplayName("shouldApplyDiscountToAllCorporateItems_whenThresholdExceeded")
         void shouldApplyDiscountToAllCorporateItems_whenThresholdExceeded() {
-            BigDecimal price = BigDecimal.valueOf(1000.00);
-            OrderItem item1 = createOrderItem(60, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            OrderItem item2 = createOrderItem(50, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            BigDecimal price = BigDecimal.valueOf(10.00);
+            OrderItem item1 = createOrderItem(150, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item2 = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30"));
             List<OrderItem> items = List.of(item1, item2);
-            Order order = createOrderWithMultipleItems(items, BigDecimal.valueOf(110000.00));
+            Order order = createOrderWithMultipleItems(items, BigDecimal.valueOf(4000.00));
             Product product = createProduct(true);
 
             corporateItemHandler.process(item1, product, order);
@@ -416,6 +422,16 @@ class CorporateProductValidationTest {
 
             assertTrue(item1.metadata().containsKey("discountAmount"));
             assertTrue(item2.metadata().containsKey("discountAmount"));
+            BigDecimal discount1 = (BigDecimal) item1.metadata().get("discountAmount");
+            BigDecimal discount2 = (BigDecimal) item2.metadata().get("discountAmount");
+            BigDecimal expectedDiscount1 = price
+                    .multiply(BigDecimal.valueOf(100))
+                    .multiply(BigDecimal.valueOf(0.15));
+            BigDecimal expectedDiscount2 = price
+                    .multiply(BigDecimal.valueOf(200))
+                    .multiply(BigDecimal.valueOf(0.15));
+            assertEquals(expectedDiscount1, discount1);
+            assertEquals(expectedDiscount2, discount2);
         }
 
         @Test
@@ -448,23 +464,28 @@ class CorporateProductValidationTest {
         @Test
         @DisplayName("shouldOnlyCountCorporateItemsForVolumeDiscount")
         void shouldOnlyCountCorporateItemsForVolumeDiscount() {
-            BigDecimal price = BigDecimal.valueOf(1000.00);
-            OrderItem corporateItem = createOrderItem(60, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            BigDecimal price = BigDecimal.valueOf(10.00);
+            OrderItem corporateItem = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30"));
             OrderItem physicalItem = OrderItem.builder()
                     .productId(UUID.randomUUID())
-                    .quantity(50)
+                    .quantity(500)
                     .productType(ProductType.PHYSICAL)
                     .price(price)
                     .metadata(new RawProductMetadata())
                     .build();
             List<OrderItem> items = List.of(corporateItem, physicalItem);
-            Order order = createOrderWithMultipleItems(items, BigDecimal.valueOf(110000.00));
+            Order order = createOrderWithMultipleItems(items, BigDecimal.valueOf(7500.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(corporateItem, product, order);
 
             assertTrue(result.isProcessed());
-            assertFalse(corporateItem.metadata().containsKey("discountAmount"));
+            assertTrue(corporateItem.metadata().containsKey("discountAmount"));
+            BigDecimal discountAmount = (BigDecimal) corporateItem.metadata().get("discountAmount");
+            BigDecimal expectedDiscount = price
+                    .multiply(BigDecimal.valueOf(200))
+                    .multiply(BigDecimal.valueOf(0.15));
+            assertEquals(expectedDiscount, discountAmount);
         }
     }
 }

@@ -64,19 +64,19 @@ public class PhysicalItemHandler implements OrderItemHandler {
         String location = getWarehouseLocation(item);
 
         if (!deliveryService.isValidWarehouseLocation(location)) {
-            log.warn("Invalid warehouseLocation in metadata for product {}", item.productId());
+            log.warn("Invalid warehouseLocation in order {} for product {}", ctx.id(), item.productId());
             return ValidationResult.fail(OrderError.WAREHOUSE_UNAVAILABLE.toString());
         }
 
         // Stock validation
         if (!product.isActive()) {
-            log.warn("Product {} is not active", item.productId());
+            log.warn("Product {} is no longer active in order {}", item.productId(), ctx.id());
             return ValidationResult.fail(OrderError.OUT_OF_STOCK.toString());
         }
 
         if (product.stockQuantity() == null || product.stockQuantity() < item.quantity()) {
-            log.warn("Insufficient stock for product {}: required {}, available {}", 
-                    item.productId(), item.quantity(), product.stockQuantity());
+            log.warn("Insufficient stock for product {} in order {}: required {}, available {}", 
+                    item.productId(), ctx.id(), item.quantity(), product.stockQuantity());
             return ValidationResult.fail(OrderError.OUT_OF_STOCK.toString());
         }
 
