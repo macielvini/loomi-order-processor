@@ -23,8 +23,8 @@ INSERT INTO products (id, name, product_type, price, stock_quantity, is_active, 
 
 -- Pré-venda
 INSERT INTO products (id, name, product_type, price, stock_quantity, is_active, metadata) VALUES
-  (gen_random_uuid(), 'Epic Game 2025',  'PRE_ORDER',  249.90, 1000,  true,   '{"releaseDate": "2025-06-01"}'),
-  (gen_random_uuid(), 'PlayStation 6',   'PRE_ORDER', 4999.00, 500,   true,   '{"releaseDate": "2025-11-15"}'),
+  (gen_random_uuid(), 'GTA VI',  'PRE_ORDER',  249.90, 1000,  true,   '{"releaseDate": "2026-12-01"}'),
+  (gen_random_uuid(), 'PlayStation 7',   'PRE_ORDER', 4999.00, 500,   true,   '{"releaseDate": "2030-12-01"}'),
   (gen_random_uuid(), 'iPhone 16 Pro',   'PRE_ORDER', 7999.00, 2000,  true,   '{"releaseDate": "2025-09-20"}');
 
 -- Corporativo
