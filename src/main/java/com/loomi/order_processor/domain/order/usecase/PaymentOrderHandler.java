@@ -1,12 +1,12 @@
-package com.loomi.order_processor.domain.order.service;
+package com.loomi.order_processor.domain.order.usecase;
 
 import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.valueobject.OrderError;
-import com.loomi.order_processor.domain.payment.service.FraudService;
-import com.loomi.order_processor.domain.payment.service.PaymentService;
+import com.loomi.order_processor.domain.payment.usecase.FraudService;
+import com.loomi.order_processor.domain.payment.usecase.PaymentService;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 
 import lombok.RequiredArgsConstructor;

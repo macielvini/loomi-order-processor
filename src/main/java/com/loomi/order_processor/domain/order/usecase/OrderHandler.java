@@ -1,4 +1,4 @@
-package com.loomi.order_processor.domain.order.service;
+package com.loomi.order_processor.domain.order.usecase;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;

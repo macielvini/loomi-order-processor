@@ -1,4 +1,4 @@
-package com.loomi.order_processor.domain.order.service;
+package com.loomi.order_processor.domain.order.usecase;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,8 +24,8 @@ import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.valueobject.OrderError;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
-import com.loomi.order_processor.domain.payment.service.FraudService;
-import com.loomi.order_processor.domain.payment.service.PaymentService;
+import com.loomi.order_processor.domain.payment.usecase.FraudService;
+import com.loomi.order_processor.domain.payment.usecase.PaymentService;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;

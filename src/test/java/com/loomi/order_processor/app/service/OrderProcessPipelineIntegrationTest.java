@@ -20,16 +20,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.producer.AlertProducer;
-import com.loomi.order_processor.domain.order.service.DeliveryService;
-import com.loomi.order_processor.domain.order.service.HighValueOrderHandler;
-import com.loomi.order_processor.domain.order.service.OrderHandler;
-import com.loomi.order_processor.domain.order.service.OrderIsPendingHandler;
-import com.loomi.order_processor.domain.order.service.PaymentOrderHandler;
-import com.loomi.order_processor.domain.order.service.PhysicalItemHandler;
+import com.loomi.order_processor.domain.order.usecase.DeliveryService;
+import com.loomi.order_processor.domain.order.usecase.HighValueOrderHandler;
+import com.loomi.order_processor.domain.order.usecase.OrderHandler;
+import com.loomi.order_processor.domain.order.usecase.OrderIsPendingHandler;
+import com.loomi.order_processor.domain.order.usecase.PaymentOrderHandler;
+import com.loomi.order_processor.domain.order.usecase.PhysicalItemHandler;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
-import com.loomi.order_processor.domain.payment.service.FraudService;
-import com.loomi.order_processor.domain.payment.service.PaymentService;
+import com.loomi.order_processor.domain.payment.usecase.FraudService;
+import com.loomi.order_processor.domain.payment.usecase.PaymentService;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.entity.Product;
@@ -71,7 +71,7 @@ class OrderProcessPipelineIntegrationTest {
         globalHandlers.add(new HighValueOrderHandler(config));
         globalHandlers.add(new PaymentOrderHandler(fraudService, paymentService));
 
-        List<com.loomi.order_processor.domain.order.service.OrderItemHandler> itemHandlers = new ArrayList<>();
+        List<com.loomi.order_processor.domain.order.usecase.OrderItemHandler> itemHandlers = new ArrayList<>();
         itemHandlers.add(new PhysicalItemHandler(
                 productRepository,
                 alertProducer,

@@ -17,7 +17,7 @@ import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
-import com.loomi.order_processor.domain.order.service.OrderService;
+import com.loomi.order_processor.domain.order.usecase.OrderService;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;

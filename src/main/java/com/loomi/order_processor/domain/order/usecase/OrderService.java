@@ -1,4 +1,4 @@
-package com.loomi.order_processor.domain.order.service;
+package com.loomi.order_processor.domain.order.usecase;
 
 import java.util.List;
 import java.util.UUID;

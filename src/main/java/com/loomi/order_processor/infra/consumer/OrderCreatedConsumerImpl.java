@@ -18,7 +18,7 @@ import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
-import com.loomi.order_processor.domain.order.service.OrderEventIdempotencyService;
+import com.loomi.order_processor.domain.order.usecase.OrderEventIdempotencyService;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 import lombok.RequiredArgsConstructor;

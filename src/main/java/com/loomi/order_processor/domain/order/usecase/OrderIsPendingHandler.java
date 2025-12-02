@@ -1,4 +1,4 @@
-package com.loomi.order_processor.domain.order.service;
+package com.loomi.order_processor.domain.order.usecase;
 
 import org.springframework.stereotype.Service;
 

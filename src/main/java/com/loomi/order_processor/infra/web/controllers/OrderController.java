@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.loomi.order_processor.domain.order.dto.CreateOrder;
-import com.loomi.order_processor.domain.order.service.OrderService;
+import com.loomi.order_processor.domain.order.usecase.OrderService;
 import com.loomi.order_processor.infra.web.dto.CreateOrderRequest;
 import com.loomi.order_processor.infra.web.dto.OrderSummaryResponse;
 import com.loomi.order_processor.infra.web.dto.OrdersListResponse;

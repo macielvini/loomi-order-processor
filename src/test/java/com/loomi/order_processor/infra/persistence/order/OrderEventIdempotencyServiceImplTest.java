@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loomi.order_processor.domain.order.dto.OrderEventType;
-import com.loomi.order_processor.domain.order.service.OrderEventIdempotencyService.Result;
+import com.loomi.order_processor.domain.order.usecase.OrderEventIdempotencyService.Result;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 @ExtendWith(MockitoExtension.class)

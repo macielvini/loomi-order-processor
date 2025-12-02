@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.payment.service.FraudService;
+import com.loomi.order_processor.domain.payment.usecase.FraudService;
 
 import lombok.RequiredArgsConstructor;
 

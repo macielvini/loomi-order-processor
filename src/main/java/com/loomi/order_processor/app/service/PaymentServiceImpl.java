@@ -3,7 +3,7 @@ package com.loomi.order_processor.app.service;
 import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.payment.service.PaymentService;
+import com.loomi.order_processor.domain.payment.usecase.PaymentService;
 
 import lombok.extern.slf4j.Slf4j;
 

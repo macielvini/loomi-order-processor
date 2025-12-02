@@ -22,7 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.order.service.OrderService;
+import com.loomi.order_processor.domain.order.usecase.OrderService;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 @WebMvcTest(OrderController.class)

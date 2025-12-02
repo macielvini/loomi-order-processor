@@ -39,7 +39,7 @@ import com.loomi.order_processor.domain.order.producer.AlertProducer;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
-import com.loomi.order_processor.domain.payment.service.FraudService;
+import com.loomi.order_processor.domain.payment.usecase.FraudService;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.entity.Product;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
