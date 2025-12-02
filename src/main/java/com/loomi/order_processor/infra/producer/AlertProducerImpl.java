@@ -5,14 +5,14 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.domain.order.entity.LowStockAlertEvent;
-import com.loomi.order_processor.domain.order.producer.AlertProducer;
+import com.loomi.order_processor.domain.event.usecase.AlertEventPublisher;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AlertProducerImpl implements AlertProducer {
+public class AlertProducerImpl implements AlertEventPublisher {
 
     private final KafkaTemplate<String, LowStockAlertEvent> lowStockAlertTemplate;
 

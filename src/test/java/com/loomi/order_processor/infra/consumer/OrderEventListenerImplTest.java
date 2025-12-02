@@ -24,20 +24,20 @@ import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedPayload;
 import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
-import com.loomi.order_processor.domain.order.producer.OrderProducer;
+import com.loomi.order_processor.domain.event.usecase.OrderEventPublisher;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.usecase.OrderEventIdempotencyService;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 
 @ExtendWith(MockitoExtension.class)
-class OrderCreatedConsumerImplTest {
+class OrderEventListenerImplTest {
 
     @Mock
     private OrderRepository orderRepository;
 
     @Mock
-    private OrderProducer orderProducer;
+    private OrderEventPublisher orderEventPublisher;
 
     @Mock
     private OrderProcessPipeline orderProcessPipeline;
@@ -46,7 +46,7 @@ class OrderCreatedConsumerImplTest {
     private OrderEventIdempotencyService orderEventIdempotencyService;
 
     @InjectMocks
-    private OrderCreatedConsumerImpl consumer;
+    private OrderEventListenerImpl consumer;
 
     @Captor
     private ArgumentCaptor<OrderProcessedEvent> processedEventCaptor;
@@ -80,6 +80,6 @@ class OrderCreatedConsumerImplTest {
 
         consumer.handler(event, mock(Acknowledgment.class));
 
-        verify(orderProducer, times(1)).sendOrderProcessedEvent(processedEventCaptor.capture());
+        verify(orderEventPublisher, times(1)).sendOrderProcessedEvent(processedEventCaptor.capture());
     }
 }

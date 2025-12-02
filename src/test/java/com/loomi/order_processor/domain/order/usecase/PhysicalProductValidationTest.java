@@ -23,7 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.LowStockAlertEvent;
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.order.producer.AlertProducer;
+import com.loomi.order_processor.domain.event.usecase.AlertEventPublisher;
 import com.loomi.order_processor.domain.order.valueobject.OrderError;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.product.dto.ProductType;
@@ -43,7 +43,7 @@ class PhysicalProductValidationTest {
     private ProductRepository productRepository;
 
     @Mock
-    private AlertProducer alertProducer;
+    private AlertEventPublisher alertProducer;
 
     private DeliveryService deliveryService;
 

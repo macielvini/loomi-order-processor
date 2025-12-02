@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 import java.util.UUID;
 
+import com.loomi.order_processor.infra.consumer.OrderEventListenerImpl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,12 +32,11 @@ import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedPayload;
-import com.loomi.order_processor.domain.order.producer.OrderProducer;
+import com.loomi.order_processor.domain.event.usecase.OrderEventPublisher;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
-import com.loomi.order_processor.infra.consumer.OrderCreatedConsumerImpl;
 import com.loomi.order_processor.infra.persistence.order.OrderEventJpaRepository;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -77,7 +77,7 @@ class OrderEventIdempotencyIntegrationTest {
         private int PORT;
 
         @Autowired
-        private OrderCreatedConsumerImpl consumer;
+        private OrderEventListenerImpl consumer;
 
         @Autowired
         private OrderRepository orderRepository;
@@ -86,7 +86,7 @@ class OrderEventIdempotencyIntegrationTest {
         private OrderProcessPipeline orderProcessPipeline;
 
         @MockitoBean
-        private OrderProducer orderProducer;
+        private OrderEventPublisher orderEventPublisher;
 
         @Autowired
         private OrderEventJpaRepository orderEventJpaRepository;
@@ -124,7 +124,7 @@ class OrderEventIdempotencyIntegrationTest {
                 // Verify that the order process pipeline was called only once
                 verify(orderProcessPipeline, times(1)).validate(any(Order.class));
                 verify(orderProcessPipeline, times(1)).process(any(Order.class));
-                verify(orderProducer, times(1)).sendOrderProcessedEvent(any());
+                verify(orderEventPublisher, times(1)).sendOrderProcessedEvent(any());
 
                 Integer count = orderEventJpaRepository.countByEventId(eventId);
 
@@ -163,7 +163,7 @@ class OrderEventIdempotencyIntegrationTest {
                 assertThat(failedOrder.status()).isEqualTo(OrderStatus.FAILED);
 
                 verify(orderProcessPipeline, times(1)).validate(any(Order.class));
-                verify(orderProducer, times(1)).sendOrderFailedEvent(any());
+                verify(orderEventPublisher, times(1)).sendOrderFailedEvent(any());
 
                 Integer count = orderEventJpaRepository.countByEventId(eventId);
                 assertThat(count).isEqualTo(1);

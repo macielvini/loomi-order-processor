@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.LowStockAlertEvent;
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.order.producer.AlertProducer;
+import com.loomi.order_processor.domain.event.usecase.AlertEventPublisher;
 import com.loomi.order_processor.domain.order.valueobject.OrderError;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.product.dto.ProductType;
@@ -25,7 +25,7 @@ public class PhysicalItemHandler implements OrderItemHandler {
     private static final int LOW_STOCK_THRESHOLD = 5;
 
     private final ProductRepository productRepository;
-    private final AlertProducer alertProducer;
+    private final AlertEventPublisher alertProducer;
     private final DeliveryService deliveryService;
 
     private ValidationResult validateMetadata(OrderItem item) {

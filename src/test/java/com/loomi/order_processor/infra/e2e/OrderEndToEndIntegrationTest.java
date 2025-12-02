@@ -35,8 +35,8 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.order.producer.AlertProducer;
-import com.loomi.order_processor.domain.order.producer.OrderProducer;
+import com.loomi.order_processor.domain.event.usecase.AlertEventPublisher;
+import com.loomi.order_processor.domain.event.usecase.OrderEventPublisher;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.payment.usecase.FraudService;
@@ -92,20 +92,20 @@ class OrderEndToEndIntegrationTest {
     private OrderRepository orderRepository;
 
     @MockitoSpyBean
-    private OrderProducer orderProducer;
+    private OrderEventPublisher orderEventPublisher;
 
     @MockitoSpyBean
     private FraudService fraudService;
 
     @MockitoSpyBean
-    private AlertProducer alertProducer;
+    private AlertEventPublisher alertProducer;
 
     private ProductRepositoryTestUtils productRepositoryUtils;
 
     @BeforeEach
     void setUp() {
         productRepositoryUtils = new ProductRepositoryTestUtils(productRepository);
-        reset(orderProducer, fraudService, alertProducer);
+        reset(orderEventPublisher, fraudService, alertProducer);
     }
 
     @Test
@@ -150,7 +150,7 @@ class OrderEndToEndIntegrationTest {
                     assertThat(processed.totalAmount()).isEqualByComparingTo(product.price());
                 });
 
-        verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
+        verify(orderEventPublisher, atLeastOnce()).sendOrderProcessedEvent(any());
     }
 
     @Test
@@ -248,7 +248,7 @@ class OrderEndToEndIntegrationTest {
                     assertThat(failed.status()).isEqualTo(OrderStatus.FAILED);
                 });
 
-        verify(orderProducer, atLeastOnce()).sendOrderFailedEvent(any());
+        verify(orderEventPublisher, atLeastOnce()).sendOrderFailedEvent(any());
     }
 
     @Test
@@ -293,9 +293,9 @@ class OrderEndToEndIntegrationTest {
                     assertThat(processed.totalAmount()).isEqualByComparingTo(product.price());
                 });
 
-        verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
-        verify(orderProducer, never()).sendOrderFailedEvent(any());
-        verify(orderProducer, never()).sendOrderPendingApprovalEvent(any());
+        verify(orderEventPublisher, atLeastOnce()).sendOrderProcessedEvent(any());
+        verify(orderEventPublisher, never()).sendOrderFailedEvent(any());
+        verify(orderEventPublisher, never()).sendOrderPendingApprovalEvent(any());
     }
 
     @Test
@@ -341,9 +341,9 @@ class OrderEndToEndIntegrationTest {
                     assertThat(pending.status()).isEqualTo(OrderStatus.PENDING_APPROVAL);
                 });
 
-        verify(orderProducer, atLeastOnce()).sendOrderPendingApprovalEvent(any());
-        verify(orderProducer, never()).sendOrderProcessedEvent(any());
-        verify(orderProducer, never()).sendOrderFailedEvent(any());
+        verify(orderEventPublisher, atLeastOnce()).sendOrderPendingApprovalEvent(any());
+        verify(orderEventPublisher, never()).sendOrderProcessedEvent(any());
+        verify(orderEventPublisher, never()).sendOrderFailedEvent(any());
     }
 
     @Test
@@ -417,7 +417,7 @@ class OrderEndToEndIntegrationTest {
                     assertThat(processed.status()).isEqualTo(OrderStatus.PROCESSED);
                 });
 
-        verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
+        verify(orderEventPublisher, atLeastOnce()).sendOrderProcessedEvent(any());
     }
 
     @Test
@@ -462,9 +462,9 @@ class OrderEndToEndIntegrationTest {
                     assertThat(pendingApproval.status()).isEqualTo(OrderStatus.PENDING_APPROVAL);
                 });
 
-        verify(orderProducer, atLeastOnce()).sendOrderPendingApprovalEvent(any());
-        verify(orderProducer, never()).sendOrderProcessedEvent(any());
-        verify(orderProducer, never()).sendOrderFailedEvent(any());
+        verify(orderEventPublisher, atLeastOnce()).sendOrderPendingApprovalEvent(any());
+        verify(orderEventPublisher, never()).sendOrderProcessedEvent(any());
+        verify(orderEventPublisher, never()).sendOrderFailedEvent(any());
     }
 
     @Test
@@ -506,7 +506,7 @@ class OrderEndToEndIntegrationTest {
         int ordersAfter = orderRepository.findAll().size();
         assertThat(ordersAfter).isEqualTo(ordersBefore);
 
-        verify(orderProducer, never()).sendOrderCreatedEvent(any());
+        verify(orderEventPublisher, never()).sendOrderCreatedEvent(any());
     }
     
     @Test
@@ -530,7 +530,7 @@ class OrderEndToEndIntegrationTest {
         int ordersAfter = orderRepository.findAll().size();
         assertThat(ordersAfter).isEqualTo(ordersBefore);
 
-        verify(orderProducer, never()).sendOrderCreatedEvent(any());
+        verify(orderEventPublisher, never()).sendOrderCreatedEvent(any());
     }
 
 }

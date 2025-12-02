@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.order.producer.AlertProducer;
+import com.loomi.order_processor.domain.event.usecase.AlertEventPublisher;
 import com.loomi.order_processor.domain.order.usecase.DeliveryService;
 import com.loomi.order_processor.domain.order.usecase.HighValueOrderHandler;
 import com.loomi.order_processor.domain.order.usecase.OrderHandler;
@@ -50,7 +50,7 @@ class OrderProcessPipelineIntegrationTest {
     private PaymentService paymentService;
 
     @Mock
-    private AlertProducer alertProducer;
+    private AlertEventPublisher alertProducer;
 
     private OrderProcessPipeline pipeline;
     private UUID testOrderId;

@@ -15,7 +15,7 @@ import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
-import com.loomi.order_processor.domain.order.producer.OrderProducer;
+import com.loomi.order_processor.domain.event.usecase.OrderEventPublisher;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.usecase.OrderService;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
@@ -36,7 +36,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final OrderProducer orderProducer;
+    private final OrderEventPublisher orderEventPublisher;
 
     @Override
     public Order consultOrder(UUID orderId) {
@@ -55,7 +55,7 @@ public class OrderServiceImpl implements OrderService {
         var order = buildOrderWithPriceSnapshot(createOrder);
         var savedOrder = orderRepository.save(order);
 
-        orderProducer.sendOrderCreatedEvent(OrderCreatedEvent.fromOrder(savedOrder));
+        orderEventPublisher.sendOrderCreatedEvent(OrderCreatedEvent.fromOrder(savedOrder));
         return savedOrder;
     }
 

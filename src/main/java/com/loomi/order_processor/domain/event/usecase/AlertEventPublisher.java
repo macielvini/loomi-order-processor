@@ -1,8 +1,8 @@
-package com.loomi.order_processor.domain.order.producer;
+package com.loomi.order_processor.domain.event.usecase;
 
 import com.loomi.order_processor.domain.order.entity.LowStockAlertEvent;
 
-public interface AlertProducer {
+public interface AlertEventPublisher {
 
     void sendLowStockAlert(LowStockAlertEvent event);
 }

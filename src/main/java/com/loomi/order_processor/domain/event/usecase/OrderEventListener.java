@@ -1,8 +1,8 @@
-package com.loomi.order_processor.domain.order.consumer;
+package com.loomi.order_processor.domain.event.usecase;
 
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import org.springframework.kafka.support.Acknowledgment;
 
-public interface OrderCreatedConsumer {
+public interface OrderEventListener {
     void handler(OrderCreatedEvent event, Acknowledgment ack);
 }

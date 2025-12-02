@@ -13,14 +13,14 @@ import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderPendingApprovalEvent;
 import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
-import com.loomi.order_processor.domain.order.producer.OrderProducer;
+import com.loomi.order_processor.domain.event.usecase.OrderEventPublisher;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class OrderProducerImpl implements OrderProducer {
+public class OrderEventPublisherImpl implements OrderEventPublisher {
 
     private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
     private static final String CORRELATION_ID_MDC_KEY = "correlationId";
