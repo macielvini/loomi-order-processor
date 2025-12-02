@@ -2,7 +2,7 @@ package com.loomi.order_processor.app.service.order.handler.item;
 
 import com.loomi.order_processor.domain.order.usecase.CalculateDeliveryDays;
 import com.loomi.order_processor.domain.order.usecase.DeliveryService;
-import com.loomi.order_processor.domain.order.usecase.IsAvailableUseCase;
+import com.loomi.order_processor.domain.order.usecase.IsItemAvailableForPurchaseUseCase;
 import com.loomi.order_processor.domain.order.usecase.NotifyWhenStockIsLowUseCase;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,7 @@ import java.util.Objects;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PhysicalItemHandler implements OrderItemHandler, CalculateDeliveryDays, IsAvailableUseCase, NotifyWhenStockIsLowUseCase {
+public class PhysicalItemHandler implements OrderItemHandler, CalculateDeliveryDays, IsItemAvailableForPurchaseUseCase, NotifyWhenStockIsLowUseCase {
 
     private static final int LOW_STOCK_THRESHOLD = 5;
 
