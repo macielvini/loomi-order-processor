@@ -7,14 +7,11 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +31,6 @@ import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.payment.service.FraudService;
-import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.entity.Product;
 import com.loomi.order_processor.domain.product.repository.ProductRepository;
@@ -63,104 +59,17 @@ class OrderEndToEndIntegrationTest {
     @MockitoSpyBean
     private FraudService fraudService;
 
-    private Product createPhysicalProduct() {
-        RawProductMetadata metadata = new RawProductMetadata();
-        metadata.put("warehouseLocation", "SP");
+    private ProductRepositoryTestUtils productRepositoryUtils;
 
-        Product product = Product.builder()
-                .name("Physical Product")
-                .productType(ProductType.PHYSICAL)
-                .price(new BigDecimal("199.90"))
-                .stockQuantity(100)
-                .isActive(true)
-                .metadata(metadata)
-                .build();
-
-        return productRepository.save(product);
-    }
-
-    private Product createSubscriptionProductForMixedOrder() {
-        RawProductMetadata metadata = new RawProductMetadata();
-        metadata.put("GROUP_ID", "SUB_GROUP_MIXED_1");
-
-        Product product = Product.builder()
-                .name("Subscription Product")
-                .productType(ProductType.SUBSCRIPTION)
-                .price(new BigDecimal("49.90"))
-                .stockQuantity(0)
-                .isActive(true)
-                .metadata(metadata)
-                .build();
-
-        return productRepository.save(product);
-    }
-
-    private Product createDigitalProductForMixedOrder() {
-        RawProductMetadata metadata = new RawProductMetadata();
-
-        Product product = Product.builder()
-                .name("Digital Product")
-                .productType(ProductType.DIGITAL)
-                .price(new BigDecimal("29.90"))
-                .stockQuantity(10)
-                .isActive(true)
-                .metadata(metadata)
-                .build();
-
-        return productRepository.save(product);
-    }
-
-    private Product createPreOrderProductForMixedOrder() {
-        RawProductMetadata metadata = new RawProductMetadata();
-        metadata.put("releaseDate", LocalDate.now().plusDays(30).toString());
-
-        Product product = Product.builder()
-                .name("Pre-order Product")
-                .productType(ProductType.PRE_ORDER)
-                .price(new BigDecimal("199.00"))
-                .stockQuantity(50)
-                .isActive(true)
-                .metadata(metadata)
-                .build();
-
-        return productRepository.save(product);
-    }
-
-    private Product createHighValuePhysicalProduct() {
-        RawProductMetadata metadata = new RawProductMetadata();
-        metadata.put("warehouseLocation", "SP");
-
-        Product product = Product.builder()
-                .name("High Value Physical Product")
-                .productType(ProductType.PHYSICAL)
-                .price(new BigDecimal("15000.00"))
-                .stockQuantity(100)
-                .isActive(true)
-                .metadata(metadata)
-                .build();
-
-        return productRepository.save(product);
-    }
-
-    private Product createCorporateProductForPendingApproval() {
-        RawProductMetadata metadata = new RawProductMetadata();
-
-        Product product = Product.builder()
-                .name("Corporate High Value Product")
-                .productType(ProductType.CORPORATE)
-                .price(new BigDecimal("60000.00"))
-                .stockQuantity(0)
-                .isActive(true)
-                .metadata(metadata)
-                .build();
-
-        return productRepository.save(product);
+    @BeforeEach
+    void setUp() {
+        productRepositoryUtils = new ProductRepositoryTestUtils(productRepository);
     }
 
     @Test
     @DisplayName("Should process a physical order end-to-end from API to PROCESSED status")
     void shouldProcessPhysicalOrderEndToEnd() {
-        Product product = createPhysicalProduct();
+        Product product = productRepositoryUtils.createPhysicalProduct();
 
         RawProductMetadata itemMetadata = new RawProductMetadata();
         itemMetadata.put("warehouseLocation", "SP");
@@ -205,8 +114,8 @@ class OrderEndToEndIntegrationTest {
     @Test
     @DisplayName("Should mark order as FAILED and publish OrderFailedEvent when at least one item fails")
     void shouldMarkOrderAsFailedWhenAtLeastOneItemFailsEndToEnd() {
-        Product okProduct = createPhysicalProduct();
-        Product failingProduct = createPhysicalProduct();
+        Product okProduct = productRepositoryUtils.createPhysicalProduct();
+        Product failingProduct = productRepositoryUtils.createPhysicalProduct();
         failingProduct.stockQuantity(1);
         productRepository.update(failingProduct);
 
@@ -257,7 +166,7 @@ class OrderEndToEndIntegrationTest {
     @Test
     @DisplayName("Should process high value physical order without fraud end-to-end")
     void shouldProcessHighValuePhysicalOrderWithoutFraudEndToEnd() {
-        Product product = createHighValuePhysicalProduct();
+        Product product = productRepositoryUtils.createHighValuePhysicalProduct();
 
         RawProductMetadata itemMetadata = new RawProductMetadata();
         itemMetadata.put("warehouseLocation", "SP");
@@ -304,7 +213,7 @@ class OrderEndToEndIntegrationTest {
     @Test
     @DisplayName("Should mark high value order as PENDING_APPROVAL and publish pending approval event when fraud is detected")
     void shouldMarkHighValueOrderAsPendingApprovalWhenFraudDetectedEndToEnd() {
-        Product product = createHighValuePhysicalProduct();
+        Product product = productRepositoryUtils.createHighValuePhysicalProduct();
 
         RawProductMetadata itemMetadata = new RawProductMetadata();
         itemMetadata.put("warehouseLocation", "SP");
@@ -352,10 +261,10 @@ class OrderEndToEndIntegrationTest {
     @Test
     @DisplayName("Should process a mixed order with multiple product types end-to-end")
     void shouldProcessMixedOrderWithMultipleProductTypesEndToEnd() {
-        Product physical = createPhysicalProduct();
-        Product subscription = createSubscriptionProductForMixedOrder();
-        Product digital = createDigitalProductForMixedOrder();
-        Product preOrder = createPreOrderProductForMixedOrder();
+        Product physical = productRepositoryUtils.createPhysicalProduct();
+        Product subscription = productRepositoryUtils.createSubscriptionProductForMixedOrder();
+        Product digital = productRepositoryUtils.createDigitalProductForMixedOrder();
+        Product preOrder = productRepositoryUtils.createPreOrderProductForMixedOrder();
 
         RawProductMetadata physicalMetadata = new RawProductMetadata();
         physicalMetadata.put("warehouseLocation", "SP");
@@ -426,7 +335,7 @@ class OrderEndToEndIntegrationTest {
     @Test
     @DisplayName("Should mark corporate high value order as PENDING_APPROVAL and publish pending approval event")
     void shouldMarkCorporateHighValueOrderAsPendingApprovalEndToEnd() {
-        Product corporateProduct = createCorporateProductForPendingApproval();
+        Product corporateProduct = productRepositoryUtils.createCorporateProductForPendingApproval();
 
         RawProductMetadata corporateMetadata = new RawProductMetadata();
         corporateMetadata.put("cnpj", "12.345.678/0001-90");
