@@ -1,7 +1,7 @@
 APP_NAME=order_processor
 DOCKER_COMPOSE=docker compose
 
-.PHONY: setup up down build test clean logs db-migrate
+.PHONY: all
 
 setup:
 	$(DOCKER_COMPOSE) build
@@ -18,7 +18,7 @@ coverage:
 	@echo "Coverage report generated in: target/site/jacoco/index.html"
 
 up:
-	$(DOCKER_COMPOSE) up --build
+	$(DOCKER_COMPOSE) up -d --build
 
 down:
 	$(DOCKER_COMPOSE) down
