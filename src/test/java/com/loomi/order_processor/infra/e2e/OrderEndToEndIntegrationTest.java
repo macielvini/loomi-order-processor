@@ -28,6 +28,7 @@ import com.loomi.order_processor.TestcontainersConfiguration;
 import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.producer.AlertProducer;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.payment.service.FraudService;
@@ -58,6 +59,9 @@ class OrderEndToEndIntegrationTest {
 
     @MockitoSpyBean
     private FraudService fraudService;
+
+    @MockitoSpyBean
+    private AlertProducer alertProducer;
 
     private ProductRepositoryTestUtils productRepositoryUtils;
 
@@ -109,6 +113,52 @@ class OrderEndToEndIntegrationTest {
                 });
 
         verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
+    }
+
+    @Test
+    @DisplayName("Should send low stock alert when remaining stock for a physical product is below threshold")
+    void shouldSendLowStockAlertWhenRemainingStockIsBelowThresholdEndToEnd() {
+        Product product = productRepositoryUtils.createPhysicalProduct();
+        product.stockQuantity(6);
+        productRepository.update(product);
+
+        RawProductMetadata itemMetadata = new RawProductMetadata();
+        itemMetadata.put("warehouseLocation", "SP");
+
+        CreateOrderItem item = CreateOrderItem.builder()
+                .productId(product.id())
+                .quantity(2)
+                .metadata(itemMetadata)
+                .build();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-low-stock-alert",
+                List.of(item)
+        );
+
+        ResponseEntity<Order> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                Order.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Order createdOrder = response.getBody();
+        assertThat(createdOrder).isNotNull();
+        assertThat(createdOrder.id()).isNotNull();
+        assertThat(createdOrder.status()).isEqualTo(OrderStatus.PENDING);
+
+        UUID orderId = createdOrder.id();
+
+        await()
+                .atMost(Duration.ofSeconds(20))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Order processed = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(processed.status()).isEqualTo(OrderStatus.PROCESSED);
+                });
+
+        verify(alertProducer, atLeastOnce()).sendLowStockAlert(any());
     }
 
     @Test
@@ -420,7 +470,6 @@ class OrderEndToEndIntegrationTest {
 
         verify(orderProducer, never()).sendOrderCreatedEvent(any());
     }
-
     
     @Test
     @DisplayName("Should return BAD_REQUEST and not create order when items list is empty")
