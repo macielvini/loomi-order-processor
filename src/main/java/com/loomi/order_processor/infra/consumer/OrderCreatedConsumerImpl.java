@@ -19,6 +19,7 @@ import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
+import com.loomi.order_processor.domain.order.service.OrderEventIdempotencyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,6 +31,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
     private final OrderRepository orderRepository;
     private final OrderProducer producer;
     private final OrderProcessPipeline pipeline;
+    private final OrderEventIdempotencyService orderEventIdempotencyService;
 
     private OrderFailedEvent buildFailedEvent(UUID orderId, List<String> errors) {
         return OrderFailedEvent.fromOrder(orderId, String.join(", ", errors));
@@ -64,6 +66,19 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
     public void handler(OrderCreatedEvent event) {
         log.info("Received Order Created Event: {}", event);
         UUID orderId = event.getPayload().getId();
+
+        var idempotencyResult = orderEventIdempotencyService.registerEvent(
+                event.getId(),
+                orderId,
+                event.getType(),
+                event.getPayload().getStatus(),
+                event
+        );
+
+        if (idempotencyResult.equals(OrderEventIdempotencyService.Result.ALREADY_PROCESSED)) {
+            return;
+        }
+
         try {
             var order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
 
