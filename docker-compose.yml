@@ -63,6 +63,12 @@ services:
       - "8080:8080"
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DB_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/order_processor}
+      DB_USERNAME: ${DB_USERNAME:-appuser}
+      DB_PASSWORD: ${DB_PASSWORD:-apppass}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      HIGH_VALUE_THRESHOLD: ${HIGH_VALUE_THRESHOLD:-10000.00}
+      FRAUD_THRESHOLD: ${FRAUD_THRESHOLD:-20000.00}
 
   tests:
     profiles:
