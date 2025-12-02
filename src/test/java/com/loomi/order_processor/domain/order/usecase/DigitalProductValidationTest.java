@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.loomi.order_processor.app.service.order.handler.DigitalItemHandler;
+import com.loomi.order_processor.app.service.order.handler.item.DigitalItemHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

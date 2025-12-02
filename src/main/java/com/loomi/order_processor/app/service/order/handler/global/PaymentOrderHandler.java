@@ -1,4 +1,4 @@
-package com.loomi.order_processor.app.service.order.handler;
+package com.loomi.order_processor.app.service.order.handler.global;
 
 import org.springframework.stereotype.Service;
 

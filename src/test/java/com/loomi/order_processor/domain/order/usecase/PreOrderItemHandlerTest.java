@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-import com.loomi.order_processor.app.service.order.handler.PreOrderItemHandler;
+import com.loomi.order_processor.app.service.order.handler.item.PreOrderItemHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

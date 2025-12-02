@@ -1,4 +1,4 @@
-package com.loomi.order_processor.app.service.order.handler;
+package com.loomi.order_processor.app.service.order.handler.item;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;

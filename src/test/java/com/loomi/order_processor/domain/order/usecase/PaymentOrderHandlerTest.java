@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.loomi.order_processor.app.service.order.handler.PaymentOrderHandler;
+import com.loomi.order_processor.app.service.order.handler.global.PaymentOrderHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

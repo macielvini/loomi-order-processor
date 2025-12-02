@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.loomi.order_processor.app.service.order.handler.HighValueOrderHandler;
+import com.loomi.order_processor.app.service.order.handler.global.HighValueOrderHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

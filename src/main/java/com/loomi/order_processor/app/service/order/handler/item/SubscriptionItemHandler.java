@@ -1,4 +1,4 @@
-package com.loomi.order_processor.app.service.order.handler;
+package com.loomi.order_processor.app.service.order.handler.item;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
