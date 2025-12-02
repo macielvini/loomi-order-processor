@@ -13,6 +13,10 @@ build:
 test:
 	mvn -B clean test
 
+coverage:
+	mvn -B clean test jacoco:report
+	@echo "Coverage report generated in: target/site/jacoco/index.html"
+
 up:
 	$(DOCKER_COMPOSE) up --build
 
