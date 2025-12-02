@@ -68,6 +68,7 @@ class OrderEndToEndIntegrationTest {
     @BeforeEach
     void setUp() {
         productRepositoryUtils = new ProductRepositoryTestUtils(productRepository);
+        reset(orderProducer, fraudService, alertProducer);
     }
 
     @Test
