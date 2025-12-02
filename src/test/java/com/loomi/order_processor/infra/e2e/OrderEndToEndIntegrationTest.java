@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,6 +65,53 @@ class OrderEndToEndIntegrationTest {
                 .productType(ProductType.PHYSICAL)
                 .price(new BigDecimal("199.90"))
                 .stockQuantity(100)
+                .isActive(true)
+                .metadata(metadata)
+                .build();
+
+        return productRepository.save(product);
+    }
+
+    private Product createSubscriptionProductForMixedOrder() {
+        RawProductMetadata metadata = new RawProductMetadata();
+        metadata.put("GROUP_ID", "SUB_GROUP_MIXED_1");
+
+        Product product = Product.builder()
+                .name("Subscription Product")
+                .productType(ProductType.SUBSCRIPTION)
+                .price(new BigDecimal("49.90"))
+                .stockQuantity(0)
+                .isActive(true)
+                .metadata(metadata)
+                .build();
+
+        return productRepository.save(product);
+    }
+
+    private Product createDigitalProductForMixedOrder() {
+        RawProductMetadata metadata = new RawProductMetadata();
+
+        Product product = Product.builder()
+                .name("Digital Product")
+                .productType(ProductType.DIGITAL)
+                .price(new BigDecimal("29.90"))
+                .stockQuantity(10)
+                .isActive(true)
+                .metadata(metadata)
+                .build();
+
+        return productRepository.save(product);
+    }
+
+    private Product createPreOrderProductForMixedOrder() {
+        RawProductMetadata metadata = new RawProductMetadata();
+        metadata.put("releaseDate", LocalDate.now().plusDays(30).toString());
+
+        Product product = Product.builder()
+                .name("Pre-order Product")
+                .productType(ProductType.PRE_ORDER)
+                .price(new BigDecimal("199.00"))
+                .stockQuantity(50)
                 .isActive(true)
                 .metadata(metadata)
                 .build();
@@ -168,6 +216,79 @@ class OrderEndToEndIntegrationTest {
         verify(orderProducer, atLeastOnce()).sendOrderFailedEvent(any());
     }
 
-    
+    @Test
+    @DisplayName("Should process a mixed order with multiple product types end-to-end")
+    void shouldProcessMixedOrderWithMultipleProductTypesEndToEnd() {
+        Product physical = createPhysicalProduct();
+        Product subscription = createSubscriptionProductForMixedOrder();
+        Product digital = createDigitalProductForMixedOrder();
+        Product preOrder = createPreOrderProductForMixedOrder();
+
+        RawProductMetadata physicalMetadata = new RawProductMetadata();
+        physicalMetadata.put("warehouseLocation", "SP");
+
+        RawProductMetadata subscriptionMetadata = new RawProductMetadata();
+        subscriptionMetadata.put("billingCycle", "MONTHLY");
+
+        RawProductMetadata digitalMetadata = new RawProductMetadata();
+        digitalMetadata.put("deliveryEmail", "customer-mixed@example.com");
+        digitalMetadata.put("format", "PDF");
+
+        RawProductMetadata preOrderMetadata = new RawProductMetadata();
+
+        CreateOrderItem physicalItem = CreateOrderItem.builder()
+                .productId(physical.id())
+                .quantity(1)
+                .metadata(physicalMetadata)
+                .build();
+
+        CreateOrderItem subscriptionItem = CreateOrderItem.builder()
+                .productId(subscription.id())
+                .quantity(1)
+                .metadata(subscriptionMetadata)
+                .build();
+
+        CreateOrderItem digitalItem = CreateOrderItem.builder()
+                .productId(digital.id())
+                .quantity(1)
+                .metadata(digitalMetadata)
+                .build();
+
+        CreateOrderItem preOrderItem = CreateOrderItem.builder()
+                .productId(preOrder.id())
+                .quantity(1)
+                .metadata(preOrderMetadata)
+                .build();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-mixed-001",
+                List.of(physicalItem, subscriptionItem, digitalItem, preOrderItem)
+        );
+
+        ResponseEntity<Order> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                Order.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Order createdOrder = response.getBody();
+        assertThat(createdOrder).isNotNull();
+        assertThat(createdOrder.id()).isNotNull();
+        assertThat(createdOrder.status()).isEqualTo(OrderStatus.PENDING);
+
+        UUID orderId = createdOrder.id();
+
+        await()
+                .atMost(Duration.ofSeconds(20))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Order processed = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(processed.status()).isEqualTo(OrderStatus.PROCESSED);
+                });
+
+        verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
+    }
+
 }
 
