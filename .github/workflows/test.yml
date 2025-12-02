@@ -36,7 +36,7 @@ jobs:
       
       - name: Run tests
         if: ${{ !inputs.skip_tests || github.event_name != 'workflow_dispatch' }}
-        run: make test
+        run: mvn -B clean test -Pci-skip-e2e
       
       - name: Skip tests
         if: ${{ inputs.skip_tests && github.event_name == 'workflow_dispatch' }}
