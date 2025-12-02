@@ -123,8 +123,8 @@ class PreOrderItemHandlerTest {
     class ValidateTests {
 
         @Test
-        @DisplayName("shouldReturnInvalidReleaseDate_whenProductIsInactive")
-        void shouldReturnInvalidReleaseDate_whenProductIsInactive() {
+        @DisplayName("shouldReturnPreOrderSoldOut_whenProductIsInactive")
+        void shouldReturnPreOrderSoldOut_whenProductIsInactive() {
             LocalDate futureDate = LocalDate.now().plusDays(30);
             RawProductMetadata productMetadata = createMetadataWithReleaseDate(futureDate.format(DATE_FORMATTER));
             OrderItem item = createOrderItem(1, BigDecimal.valueOf(100.00), null);
@@ -134,7 +134,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.PRE_ORDER_SOLD_OUT.toString());
         }
 
         @Test
@@ -147,7 +147,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.INVALID_RELEASE_DATE.toString());
         }
 
         @Test
@@ -160,7 +160,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.INVALID_RELEASE_DATE.toString());
         }
 
         @Test
@@ -174,7 +174,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.INVALID_RELEASE_DATE.toString());
         }
 
         @Test
@@ -188,7 +188,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.INVALID_RELEASE_DATE.toString());
         }
 
         @Test
@@ -202,7 +202,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.INVALID_RELEASE_DATE.toString());
         }
 
         @Test
@@ -217,7 +217,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.RELEASE_DATE_PASSED.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.RELEASE_DATE_PASSED.toString());
         }
 
         @Test
@@ -232,7 +232,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.RELEASE_DATE_PASSED.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.RELEASE_DATE_PASSED.toString());
         }
 
         @Test
@@ -247,7 +247,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.PRE_ORDER_SOLD_OUT.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.PRE_ORDER_SOLD_OUT.toString());
         }
 
         @Test
@@ -262,7 +262,7 @@ class PreOrderItemHandlerTest {
             ValidationResult result = preOrderItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.PRE_ORDER_SOLD_OUT.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.PRE_ORDER_SOLD_OUT.toString());
         }
 
         @Test
@@ -294,7 +294,7 @@ class PreOrderItemHandlerTest {
             OrderProcessResult result = preOrderItemHandler.process(item, product, order);
 
             assertFalse(result.isProcessed());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.INVALID_RELEASE_DATE.toString());
         }
 
         @Test
@@ -308,7 +308,7 @@ class PreOrderItemHandlerTest {
             OrderProcessResult result = preOrderItemHandler.process(item, product, order);
 
             assertFalse(result.isProcessed());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_RELEASE_DATE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.INVALID_RELEASE_DATE.toString());
         }
 
         @Test

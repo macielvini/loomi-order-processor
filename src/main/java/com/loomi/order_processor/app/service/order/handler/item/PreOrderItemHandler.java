@@ -7,6 +7,9 @@ import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
 import com.loomi.order_processor.app.service.delivery.DeliveryService;
+import com.loomi.order_processor.domain.order.usecase.IsItemAvailableForPurchaseUseCase;
+import com.loomi.order_processor.domain.order.usecase.IsProductSoldOutUseCase;
+import com.loomi.order_processor.domain.order.usecase.IsReleaseDateValidUseCase;
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
@@ -22,10 +25,13 @@ import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PreOrderItemHandler implements OrderItemHandler {
+public class PreOrderItemHandler implements OrderItemHandler, IsItemAvailableForPurchaseUseCase, IsReleaseDateValidUseCase, IsProductSoldOutUseCase {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final int CANCELLATION_DAYS_BEFORE_RELEASE = 7;
@@ -33,7 +39,7 @@ public class PreOrderItemHandler implements OrderItemHandler {
     private final DeliveryService deliveryService;
 
     private Optional<LocalDate> extractReleaseDate(Product product) {
-        if (product.metadata() == null || product.metadata().get("releaseDate") == null) {
+        if (isNull(product.metadata()) || isNull(product.metadata().get("releaseDate"))) {
             return Optional.empty();
         }
 
@@ -45,6 +51,7 @@ public class PreOrderItemHandler implements OrderItemHandler {
         try {
             return Optional.of(LocalDate.parse(releaseDateStr, DATE_FORMATTER));
         } catch (DateTimeParseException e) {
+            log.error("Invalid 'releaseDate' format in product {}! Expected format is YYYY-MM-DD", product.id());
             return Optional.empty();
         }
     }
@@ -56,25 +63,19 @@ public class PreOrderItemHandler implements OrderItemHandler {
 
     @Override
     public ValidationResult validate(OrderItem item, Product product, Order ctx) {
-        if (!product.isActive()) {
-            log.error("Product {} is not active for order {}", item.productId(), ctx.id());
+        if (extractReleaseDate(product).isEmpty()) {
             return ValidationResult.fail(OrderError.INVALID_RELEASE_DATE.toString());
         }
 
-        var optReleaseDate = extractReleaseDate(product);
-        if (optReleaseDate.isEmpty()) {
-            log.error("Failed to extract releaseDate for product {} in order {}",
-                    item.productId(), ctx.id());
-            return ValidationResult.fail(OrderError.INVALID_RELEASE_DATE.toString());
+        if (!this.isItemAvailable(item, product)) {
+            return ValidationResult.fail(OrderError.PRE_ORDER_SOLD_OUT.toString());
         }
-        LocalDate releaseDate = optReleaseDate.get();
 
-        LocalDate today = LocalDate.now();
-        if (!releaseDate.isAfter(today)) {
+        if (!this.isReleaseDateValidFor(product)) {
             return ValidationResult.fail(OrderError.RELEASE_DATE_PASSED.toString());
         }
 
-        if (product.stockQuantity() == null || product.stockQuantity() < item.quantity()) {
+        if (this.isProductSoldOut(product, item.quantity())) {
             return ValidationResult.fail(OrderError.PRE_ORDER_SOLD_OUT.toString());
         }
 
@@ -118,5 +119,29 @@ public class PreOrderItemHandler implements OrderItemHandler {
         }
 
         return OrderProcessResult.ok();
+    }
+
+    @Override
+    public boolean isItemAvailable(OrderItem item, Product ctx) {
+        return ctx.isActive() && nonNull(ctx.stockQuantity());
+    }
+
+    @Override
+    public boolean isReleaseDateValidFor(Product product) {
+        var optReleaseDate = extractReleaseDate(product);
+
+        if (optReleaseDate.isEmpty()) {
+            return false;
+        }
+
+        LocalDate releaseDate = optReleaseDate.get();
+        LocalDate today = LocalDate.now();
+        return releaseDate.isAfter(today);
+    }
+
+    @Override
+    public boolean isProductSoldOut(Product product, int intendedQuantity) {
+        // TODO: return false if stock > 0 and reserve available quantity for the user
+        return nonNull(product.stockQuantity()) && product.stockQuantity() < intendedQuantity;
     }
 }
