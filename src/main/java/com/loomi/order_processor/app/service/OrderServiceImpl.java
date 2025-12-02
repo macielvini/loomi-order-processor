@@ -2,6 +2,7 @@ package com.loomi.order_processor.app.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,11 @@ public class OrderServiceImpl implements OrderService {
     public Order consultOrder(UUID orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
+    }
+
+    @Override
+    public List<Order> findOrdersByCustomerId(String customerId) {
+        return orderRepository.findByCustomerId(customerId);
     }
 
     @Override
