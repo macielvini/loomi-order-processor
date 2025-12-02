@@ -142,6 +142,21 @@ class OrderEndToEndIntegrationTest {
         return productRepository.save(product);
     }
 
+    private Product createCorporateProductForPendingApproval() {
+        RawProductMetadata metadata = new RawProductMetadata();
+
+        Product product = Product.builder()
+                .name("Corporate High Value Product")
+                .productType(ProductType.CORPORATE)
+                .price(new BigDecimal("60000.00"))
+                .stockQuantity(0)
+                .isActive(true)
+                .metadata(metadata)
+                .build();
+
+        return productRepository.save(product);
+    }
+
     @Test
     @DisplayName("Should process a physical order end-to-end from API to PROCESSED status")
     void shouldProcessPhysicalOrderEndToEnd() {
@@ -406,6 +421,53 @@ class OrderEndToEndIntegrationTest {
                 });
 
         verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
+    }
+
+    @Test
+    @DisplayName("Should mark corporate high value order as PENDING_APPROVAL and publish pending approval event")
+    void shouldMarkCorporateHighValueOrderAsPendingApprovalEndToEnd() {
+        Product corporateProduct = createCorporateProductForPendingApproval();
+
+        RawProductMetadata corporateMetadata = new RawProductMetadata();
+        corporateMetadata.put("cnpj", "12.345.678/0001-90");
+        corporateMetadata.put("paymentTerms", "NET_60");
+
+        CreateOrderItem corporateItem = CreateOrderItem.builder()
+                .productId(corporateProduct.id())
+                .quantity(1)
+                .metadata(corporateMetadata)
+                .build();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-corporate-001",
+                List.of(corporateItem)
+        );
+
+        ResponseEntity<Order> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                Order.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Order createdOrder = response.getBody();
+        assertThat(createdOrder).isNotNull();
+        assertThat(createdOrder.id()).isNotNull();
+        assertThat(createdOrder.status()).isEqualTo(OrderStatus.PENDING);
+
+        UUID orderId = createdOrder.id();
+
+        await()
+                .atMost(Duration.ofSeconds(20))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Order pendingApproval = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(pendingApproval.status()).isEqualTo(OrderStatus.PENDING_APPROVAL);
+                });
+
+        verify(orderProducer, atLeastOnce()).sendOrderPendingApprovalEvent(any());
+        verify(orderProducer, never()).sendOrderProcessedEvent(any());
+        verify(orderProducer, never()).sendOrderFailedEvent(any());
     }
 
 }
