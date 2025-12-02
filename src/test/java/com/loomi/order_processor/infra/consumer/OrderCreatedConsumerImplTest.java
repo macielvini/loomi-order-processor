@@ -15,7 +15,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.loomi.order_processor.app.service.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
@@ -25,6 +24,7 @@ import com.loomi.order_processor.domain.order.entity.OrderCreatedPayload;
 import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
+import com.loomi.order_processor.domain.order.service.OrderEventIdempotencyService;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +38,9 @@ class OrderCreatedConsumerImplTest {
 
     @Mock
     private OrderProcessPipeline orderProcessPipeline;
+
+    @Mock
+    private OrderEventIdempotencyService orderEventIdempotencyService;
 
     @InjectMocks
     private OrderCreatedConsumerImpl consumer;
@@ -68,11 +71,12 @@ class OrderCreatedConsumerImplTest {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderProcessPipeline.validate(order)).thenReturn(ValidationResult.ok());
         when(orderProcessPipeline.process(order)).thenReturn(OrderProcessResult.ok());
+        when(orderEventIdempotencyService.registerEvent(
+                event.getId(), orderId, event.getType(), event.getPayload().getStatus(), event))
+                .thenReturn(OrderEventIdempotencyService.Result.OK);
 
         consumer.handler(event);
 
         verify(orderProducer, times(1)).sendOrderProcessedEvent(processedEventCaptor.capture());
     }
 }
-
-
