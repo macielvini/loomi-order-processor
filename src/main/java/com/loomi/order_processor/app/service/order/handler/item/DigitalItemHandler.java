@@ -1,7 +1,10 @@
 package com.loomi.order_processor.app.service.order.handler.item;
 
-import java.util.UUID;
+import java.util.*;
 
+import com.loomi.order_processor.domain.order.usecase.CustomerAlreadyOwnsLicenseUseCase;
+import com.loomi.order_processor.domain.order.usecase.IsItemAvailableForPurchaseUseCase;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.notification.service.EmailService;
@@ -22,13 +25,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DigitalItemHandler implements OrderItemHandler {
+public class DigitalItemHandler implements OrderItemHandler, IsItemAvailableForPurchaseUseCase, CustomerAlreadyOwnsLicenseUseCase {
 
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final EmailService emailService;
 
-    private static int MAX_LICENSE_PER_ORDER_ITEM = 1;
+    private ArrayList<UUID> licensePool = new ArrayList<>();
+
+    @PostConstruct
+    public void populateLicensePool() {
+        int poolSize = 10;
+        for(int i = 0; i < poolSize; i++) {
+            licensePool.add(UUID.randomUUID());
+        }
+    }
 
     @Override
     public ProductType supportedType() {
@@ -37,23 +48,15 @@ public class DigitalItemHandler implements OrderItemHandler {
 
     @Override
     public ValidationResult validate(OrderItem item, Product product, Order ctx) {
-        if (!product.isActive()) {
-            log.error("Product is not active: {}", item.productId());
+        if (!product.isActive() || Objects.isNull(product.stockQuantity())) {
             return ValidationResult.fail(OrderError.DISTRIBUTION_RIGHTS_EXPIRED.toString());
         }
 
-        if (product.stockQuantity() == null || product.stockQuantity() < MAX_LICENSE_PER_ORDER_ITEM) {
-            log.error("License unavailable for product: {}", item.productId());
+        if (!this.isItemAvailable(item, product)) {
             return ValidationResult.fail(OrderError.LICENSE_UNAVAILABLE.toString());
         }
 
-        var customerAlreadyOwns = !orderRepository.findByCustomerIdAndProductIdAndStatus(
-                item.customerId(),
-                item.productId(),
-                OrderStatus.PROCESSED).isEmpty();
-
-        if (customerAlreadyOwns) {
-            log.error("Customer already owns product: {}", item.productId());
+        if (this.customerAlreadyOwnsLicense(ctx.customerId(), item.productId())) {
             return ValidationResult.fail(OrderError.ALREADY_OWNED.toString());
         }
 
@@ -62,8 +65,6 @@ public class DigitalItemHandler implements OrderItemHandler {
 
     @Override
     public OrderProcessResult process(OrderItem item, Product product, Order ctx) {
-        item.quantity(MAX_LICENSE_PER_ORDER_ITEM);
-
         int currentStock = product.stockQuantity();
         int remainingStock = currentStock - item.quantity();
 
@@ -72,18 +73,12 @@ public class DigitalItemHandler implements OrderItemHandler {
         log.info("License reserved for product {}: {} units, remaining: {}",
                 item.productId(), item.quantity(), remainingStock);
 
-        String activationKey = getDigitalLicenseFor(item);
-        log.info("Generated activation key for product {}: {}", item.productId(), activationKey);
-
+        String licenseKey = licensePool.remove(licensePool.size() - 1).toString();
         String customerEmail = extractEmailFromMetadata(item);
-        var emailPayload = createEmailPayload(item, product, activationKey);
+        var emailPayload = createEmailPayload(item, product, licenseKey);
         emailService.sendTo(customerEmail, emailPayload);
 
         return OrderProcessResult.ok();
-    }
-
-    private String getDigitalLicenseFor(OrderItem item) {
-        return UUID.randomUUID().toString();
     }
 
     private String extractEmailFromMetadata(OrderItem item) {
@@ -96,6 +91,19 @@ public class DigitalItemHandler implements OrderItemHandler {
     private Object createEmailPayload(OrderItem item, com.loomi.order_processor.domain.product.entity.Product product,
             String activationKey) {
         return new EmailPayload(product.name(), activationKey, item.productId());
+    }
+
+    @Override
+    public boolean isItemAvailable(OrderItem item, Product ctx) {
+        return ctx.isActive() && !licensePool.isEmpty() && ctx.stockQuantity() > 0;
+    }
+
+    @Override
+    public boolean customerAlreadyOwnsLicense(String customerId, UUID productId) {
+        return !orderRepository.findByCustomerIdAndProductIdAndStatus(
+                customerId,
+                productId,
+                OrderStatus.PROCESSED).isEmpty();
     }
 
     private record EmailPayload(String productName, String activationKey, UUID productId) {

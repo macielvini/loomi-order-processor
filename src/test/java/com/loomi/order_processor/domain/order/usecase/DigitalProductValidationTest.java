@@ -63,6 +63,7 @@ class DigitalProductValidationTest {
         testProductId = UUID.randomUUID();
         testOrderId = UUID.randomUUID();
         testCustomerId = "customer-123";
+        digitalItemHandler.populateLicensePool();
     }
 
     private OrderItem createOrderItem(int quantity, String customerId, RawProductMetadata metadata) {
@@ -124,27 +125,13 @@ class DigitalProductValidationTest {
             ValidationResult result = digitalItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.DISTRIBUTION_RIGHTS_EXPIRED.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.DISTRIBUTION_RIGHTS_EXPIRED.toString());
             verify(orderRepository, never()).findByCustomerIdAndProductIdAndStatus(any(), any(), any());
         }
 
         @Test
-        @DisplayName("shouldReturnLicenseUnavailable_whenStockQuantityIsNull")
-        void shouldReturnLicenseUnavailable_whenStockQuantityIsNull() {
-            OrderItem item = createOrderItem(1, testCustomerId, new RawProductMetadata());
-            Product product = createProduct(null, true);
-            Order order = createOrder(item);
-
-            ValidationResult result = digitalItemHandler.validate(item, product, order);
-
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.LICENSE_UNAVAILABLE.toString()));
-            verify(orderRepository, never()).findByCustomerIdAndProductIdAndStatus(any(), any(), any());
-        }
-
-        @Test
-        @DisplayName("shouldReturnLicenseUnavailable_whenNoLicensesAvailable")
-        void shouldReturnLicenseUnavailable_whenNoLicensesAvailable() {
+        @DisplayName("shouldReturnLicenseUnavailable_whenNoStockAvailable")
+        void shouldReturnLicenseUnavailable_whenNoStockAvailable() {
             OrderItem item = createOrderItem(1, testCustomerId, new RawProductMetadata());
             Product product = createProduct(0, true);
             Order order = createOrder(item);
@@ -152,8 +139,28 @@ class DigitalProductValidationTest {
             ValidationResult result = digitalItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.LICENSE_UNAVAILABLE.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.LICENSE_UNAVAILABLE.toString());
             verify(orderRepository, never()).findByCustomerIdAndProductIdAndStatus(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("shouldReturnLicenseUnavailable_whenLicensePoolIsEmpty")
+        void shouldReturnLicenseUnavailable_whenLicensePoolIsEmpty() {
+            OrderItem item = createOrderItem(1, testCustomerId, new RawProductMetadata());
+            Product product = createProduct(100, true);
+            Order order = createOrder(item);
+
+            for (int i = 0; i < 10; i++) {
+                digitalItemHandler.process(item, Product.builder()
+                        .id(testProductId)
+                        .stockQuantity(100)
+                        .build(), order);
+            }
+
+            ValidationResult result = digitalItemHandler.validate(item, product, order);
+
+            assertFalse(result.isValid());
+            assertEquals(result.getErrors().get(0), OrderError.LICENSE_UNAVAILABLE.toString());
         }
 
         @Test
@@ -175,7 +182,7 @@ class DigitalProductValidationTest {
             ValidationResult result = digitalItemHandler.validate(item, product, order);
 
             assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.ALREADY_OWNED.toString()));
+            assertEquals(result.getErrors().get(0), OrderError.ALREADY_OWNED.toString());
             verify(orderRepository).findByCustomerIdAndProductIdAndStatus(
                     testCustomerId, testProductId, OrderStatus.PROCESSED);
         }
@@ -245,8 +252,8 @@ class DigitalProductValidationTest {
         }
 
         @Test
-        @DisplayName("shouldReserveOnlyOneLicense_whenQuantityIsGreaterThanOne")
-        void shouldReserveOnlyOneLicense_whenQuantityIsGreaterThanOne() {
+        @DisplayName("shouldReserveQuantityLicenses_whenQuantityIsGreaterThanOne")
+        void shouldReserveQuantityLicenses_whenQuantityIsGreaterThanOne() {
             OrderItem item = createOrderItem(5, testCustomerId, new RawProductMetadata());
             Product product = createProduct(100, true);
             Order order = createOrder(item);
@@ -258,8 +265,7 @@ class DigitalProductValidationTest {
             ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
             verify(productRepository).update(productCaptor.capture());
             Product updatedProduct = productCaptor.getValue();
-            // Should reserve only 1 license even if quantity is 5
-            assertEquals(99, updatedProduct.stockQuantity());
+            assertEquals(95, updatedProduct.stockQuantity());
         }
 
         @Test
