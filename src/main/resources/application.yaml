@@ -3,9 +3,9 @@ spring:
     name: order_processor
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/order_processor}
-    username: ${DB_USERNAME:appuser}
-    password: ${DB_PASSWORD:apppass} 
+    url: jdbc:postgresql://localhost:5432/order_processor
+    username: appuser
+    password: apppass
 
   jpa:
     hibernate:
@@ -17,7 +17,7 @@ spring:
     baseline-on-migrate: true
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: order-processor-group
       auto-offset-reset: earliest
@@ -36,5 +36,5 @@ kafka:
     low-stock-alert: order-low-stock-alerts
 
 order-processing:
-  high-value-threshold: ${HIGH_VALUE_THRESHOLD:10000.00}
-  fraud-threshold: ${FRAUD_THRESHOLD:20000.00}
+  high-value-threshold: 10000.00
+  fraud-threshold: 20000.00
