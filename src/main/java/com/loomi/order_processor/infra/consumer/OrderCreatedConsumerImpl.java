@@ -4,12 +4,12 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loomi.order_processor.app.service.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.consumer.OrderCreatedConsumer;
-import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
@@ -63,7 +63,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
 
     @KafkaListener(topics = "${kafka.topics.order-created}", groupId = "${spring.kafka.consumer.group-id}", containerFactory = "orderCreatedListenerFactory")
     @Transactional
-    public void handler(OrderCreatedEvent event) {
+    public void handler(OrderCreatedEvent event, Acknowledgment ack) {
         log.info("Received Order Created Event: {}", event);
         UUID orderId = event.getPayload().getId();
 
@@ -76,6 +76,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
         );
 
         if (idempotencyResult.equals(OrderEventIdempotencyService.Result.ALREADY_PROCESSED)) {
+            ack.acknowledge();
             return;
         }
 
@@ -85,11 +86,13 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
             var validations = pipeline.validate(order);
             if (!validations.isValid()) {
                 failOrder(order, validations.getErrors());
+                ack.acknowledge();
                 return;
             }
 
             if (validations.isHumanReviewRequired()) {
                 requireApprovalOnOrder(order);
+                ack.acknowledge();
                 return;
             }
 
@@ -97,16 +100,18 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
 
             if (processResult.isFailed()) {
                 failOrder(order, processResult.getErrors());
+                ack.acknowledge();
                 return;
             }
 
             processOrder(order);
+            ack.acknowledge();
         } catch (OrderNotFoundException e) {
             log.error("Order not found: {}", orderId);
-            return;
+            throw e;
         } catch (Exception e) {
             log.error("Error processing order {}: {}", orderId, e.getMessage(), e);
-            producer.sendOrderFailedEvent(buildFailedEvent(orderId, OrderError.INTERNAL_ERROR.toString()));
+            throw e;
         }
     }
 

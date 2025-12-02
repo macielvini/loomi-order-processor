@@ -2,6 +2,7 @@ package com.loomi.order_processor.infra.consumer;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
 import java.util.List;
@@ -15,6 +16,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.support.Acknowledgment;
+
 import com.loomi.order_processor.app.service.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
@@ -75,7 +78,7 @@ class OrderCreatedConsumerImplTest {
                 event.getId(), orderId, event.getType(), event.getPayload().getStatus(), event))
                 .thenReturn(OrderEventIdempotencyService.Result.OK);
 
-        consumer.handler(event);
+        consumer.handler(event, mock(Acknowledgment.class));
 
         verify(orderProducer, times(1)).sendOrderProcessedEvent(processedEventCaptor.capture());
     }
