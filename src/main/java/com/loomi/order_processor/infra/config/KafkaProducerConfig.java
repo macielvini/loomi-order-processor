@@ -47,6 +47,9 @@ public class KafkaProducerConfig {
     @Value("${kafka.topics.order-pending-approval}")
     private String orderPendingApprovalTopic;
 
+    @Value("${kafka.topics.order-created-dlq:order-created-dlq}")
+    private String orderCreatedDlqTopic;
+    
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
 
@@ -80,6 +83,11 @@ public class KafkaProducerConfig {
     @Bean
     NewTopic orderPendingApprovalTopic() {
         return new NewTopic(orderPendingApprovalTopic, 1, (short) 1);
+    }
+
+    @Bean
+    NewTopic orderCreatedDlqTopic() {
+        return new NewTopic(orderCreatedDlqTopic, 1, (short) 1);
     }
 
     @Bean
@@ -135,6 +143,24 @@ public class KafkaProducerConfig {
                 props,
                 new StringSerializer(),
                 new JsonSerializer<>(objectMapper));
+    }
+
+    @Bean
+    ProducerFactory<Object, Object> genericProducerFactory(ObjectMapper objectMapper) {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        DefaultKafkaProducerFactory<String, Object> factory = new DefaultKafkaProducerFactory<>(
+                props,
+                new StringSerializer(),
+                new JsonSerializer<>(objectMapper));
+        return (ProducerFactory) factory;
+    }
+
+    @Bean
+    KafkaTemplate<Object, Object> genericKafkaTemplate(
+            ProducerFactory<Object, Object> pf) {
+        return new KafkaTemplate<>(pf);
     }
 
     @Bean
