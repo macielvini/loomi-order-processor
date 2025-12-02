@@ -12,20 +12,27 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
-import com.loomi.order_processor.TestcontainersConfiguration;
 import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
@@ -39,9 +46,38 @@ import com.loomi.order_processor.domain.product.repository.ProductRepository;
 import com.loomi.order_processor.infra.web.dto.CreateOrderRequest;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestcontainersConfiguration.class)
-@ActiveProfiles("test")
+@Testcontainers
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class OrderEndToEndIntegrationTest {
+
+        @Container
+        private static KafkaContainer kafka = new KafkaContainer(
+                        DockerImageName.parse("apache/kafka:3.7.0"));
+
+        @Container
+        static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
+                        .withDatabaseName("order_processor")
+                        .withUsername("appuser")
+                        .withPassword("apppass");
+
+        @BeforeAll
+        static void beforeAll() {
+                postgres.start();
+        }
+
+        @AfterAll
+        static void afterAll() {
+                postgres.stop();
+        }
+
+        @DynamicPropertySource
+        static void overrideProperties(DynamicPropertyRegistry registry) {
+                registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+
+                registry.add("spring.datasource.url", postgres::getJdbcUrl);
+                registry.add("spring.datasource.username", postgres::getUsername);
+                registry.add("spring.datasource.password", postgres::getPassword);
+        }
 
     @LocalServerPort
     private int PORT;
