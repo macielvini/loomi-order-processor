@@ -25,5 +25,7 @@ public interface OrderEventJpaRepository extends JpaRepository<OrderEventEntity,
             @Param("orderStatus") String orderStatus,
             @Param("payload") String payload
     );
+
+    Integer countByEventId(UUID eventId);
 }
 
