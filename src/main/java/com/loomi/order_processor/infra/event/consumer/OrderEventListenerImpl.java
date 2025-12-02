@@ -1,4 +1,4 @@
-package com.loomi.order_processor.infra.consumer;
+package com.loomi.order_processor.infra.event.consumer;
 
 import java.util.List;
 import java.util.UUID;

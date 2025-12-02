@@ -1,4 +1,4 @@
-package com.loomi.order_processor.infra.producer;
+package com.loomi.order_processor.infra.event.producer;
 
 import java.nio.charset.StandardCharsets;
 

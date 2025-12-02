@@ -1,4 +1,4 @@
-package com.loomi.order_processor.infra.producer;
+package com.loomi.order_processor.infra.event.producer;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;

@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 import java.util.UUID;
 
-import com.loomi.order_processor.infra.consumer.OrderEventListenerImpl;
+import com.loomi.order_processor.infra.event.consumer.OrderEventListenerImpl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
