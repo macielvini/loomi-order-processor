@@ -4,18 +4,21 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
 
+import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class HighValueOrderHandler implements OrderHandler {
 
-    private static final BigDecimal HIGH_VALUE_THRESHOLD = new BigDecimal("10000");
+    private final OrderProcessingConfig config;
 
     @Override
     public ValidationResult validate(Order order) {
@@ -24,8 +27,8 @@ public class HighValueOrderHandler implements OrderHandler {
             return ValidationResult.fail(OrderError.INTERNAL_ERROR.toString());
         }
 
-        if (order.totalAmount().compareTo(HIGH_VALUE_THRESHOLD) > 0) {
-            // Additional validation logic for orders with value above $10K goes here
+        BigDecimal highValueThreshold = config.getHighValueThreshold();
+        if (order.totalAmount().compareTo(highValueThreshold) > 0) {
             log.info("Order {} is a high-value order: totalAmount={}", order.id(), order.totalAmount());
         }
 
