@@ -1,4 +1,4 @@
-package com.loomi.order_processor.app.service;
+package com.loomi.order_processor.app.service.payment;
 
 import org.springframework.stereotype.Service;
 

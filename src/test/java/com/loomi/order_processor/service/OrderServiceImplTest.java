@@ -21,7 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.loomi.order_processor.app.service.OrderServiceImpl;
+import com.loomi.order_processor.app.service.order.OrderServiceImpl;
 import com.loomi.order_processor.domain.order.dto.CreateOrder;
 import com.loomi.order_processor.domain.order.dto.CreateOrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;

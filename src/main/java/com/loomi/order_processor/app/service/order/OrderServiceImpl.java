@@ -1,4 +1,4 @@
-package com.loomi.order_processor.app.service;
+package com.loomi.order_processor.app.service.order;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

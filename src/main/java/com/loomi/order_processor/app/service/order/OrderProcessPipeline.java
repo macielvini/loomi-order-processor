@@ -1,4 +1,4 @@
-package com.loomi.order_processor.app.service;
+package com.loomi.order_processor.app.service.order;
 
 import java.util.List;
 import java.util.Map;

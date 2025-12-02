@@ -8,7 +8,7 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.loomi.order_processor.app.service.OrderProcessPipeline;
+import com.loomi.order_processor.app.service.order.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.consumer.OrderCreatedConsumer;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
