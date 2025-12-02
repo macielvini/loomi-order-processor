@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -31,6 +33,7 @@ import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
+import com.loomi.order_processor.domain.payment.service.FraudService;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.entity.Product;
@@ -56,6 +59,9 @@ class OrderEndToEndIntegrationTest {
 
     @MockitoSpyBean
     private OrderProducer orderProducer;
+
+    @MockitoSpyBean
+    private FraudService fraudService;
 
     private Product createPhysicalProduct() {
         RawProductMetadata metadata = new RawProductMetadata();
@@ -278,6 +284,54 @@ class OrderEndToEndIntegrationTest {
         verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
         verify(orderProducer, never()).sendOrderFailedEvent(any());
         verify(orderProducer, never()).sendOrderPendingApprovalEvent(any());
+    }
+
+    @Test
+    @DisplayName("Should mark high value order as PENDING_APPROVAL and publish pending approval event when fraud is detected")
+    void shouldMarkHighValueOrderAsPendingApprovalWhenFraudDetectedEndToEnd() {
+        Product product = createHighValuePhysicalProduct();
+
+        RawProductMetadata itemMetadata = new RawProductMetadata();
+        itemMetadata.put("warehouseLocation", "SP");
+
+        CreateOrderItem item = CreateOrderItem.builder()
+                .productId(product.id())
+                .quantity(1)
+                .metadata(itemMetadata)
+                .build();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-high-value-fraud",
+                List.of(item)
+        );
+
+        doReturn(true).when(fraudService).isFraud(any(Order.class));
+
+        ResponseEntity<Order> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                Order.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Order createdOrder = response.getBody();
+        assertThat(createdOrder).isNotNull();
+        assertThat(createdOrder.id()).isNotNull();
+        assertThat(createdOrder.status()).isEqualTo(OrderStatus.PENDING);
+
+        UUID orderId = createdOrder.id();
+
+        await()
+                .atMost(Duration.ofSeconds(20))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Order pending = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(pending.status()).isEqualTo(OrderStatus.PENDING_APPROVAL);
+                });
+
+        verify(orderProducer, atLeastOnce()).sendOrderPendingApprovalEvent(any());
+        verify(orderProducer, never()).sendOrderProcessedEvent(any());
+        verify(orderProducer, never()).sendOrderFailedEvent(any());
     }
 
     @Test
