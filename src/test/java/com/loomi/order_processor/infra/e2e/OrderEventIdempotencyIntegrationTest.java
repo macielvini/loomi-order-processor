@@ -2,6 +2,7 @@ package com.loomi.order_processor.infra.e2e;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -116,8 +118,8 @@ class OrderEventIdempotencyIntegrationTest {
                 org.mockito.Mockito.when(orderProcessPipeline.process(any(Order.class)))
                                 .thenReturn(OrderProcessResult.ok());
 
-                consumer.handler(event);
-                consumer.handler(event);
+                consumer.handler(event, mock(Acknowledgment.class));
+                consumer.handler(event, mock(Acknowledgment.class));
 
                 // Verify that the order process pipeline was called only once
                 verify(orderProcessPipeline, times(1)).validate(any(Order.class));
@@ -154,8 +156,8 @@ class OrderEventIdempotencyIntegrationTest {
                 org.mockito.Mockito.when(orderProcessPipeline.validate(any(Order.class)))
                                 .thenReturn(ValidationResult.fail("validation-error"));
 
-                consumer.handler(event);
-                consumer.handler(event);
+                consumer.handler(event, mock(Acknowledgment.class));
+                consumer.handler(event, mock(Acknowledgment.class));
 
                 var failedOrder = orderRepository.findById(savedOrder.id()).orElseThrow();
                 assertThat(failedOrder.status()).isEqualTo(OrderStatus.FAILED);
