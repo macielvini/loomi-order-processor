@@ -22,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.event.usecase.AlertEventPublisher;
-import com.loomi.order_processor.domain.order.usecase.DeliveryService;
+import com.loomi.order_processor.app.service.delivery.DeliveryService;
 import com.loomi.order_processor.app.service.order.handler.global.HighValueOrderHandler;
 import com.loomi.order_processor.app.service.order.handler.global.OrderHandler;
 import com.loomi.order_processor.app.service.order.handler.global.OrderIsPendingHandler;

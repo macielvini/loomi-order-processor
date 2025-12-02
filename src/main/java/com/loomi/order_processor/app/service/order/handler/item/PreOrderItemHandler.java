@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
-import com.loomi.order_processor.domain.order.usecase.DeliveryService;
+import com.loomi.order_processor.app.service.delivery.DeliveryService;
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;

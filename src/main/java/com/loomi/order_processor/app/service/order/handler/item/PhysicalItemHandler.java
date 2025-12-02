@@ -1,7 +1,7 @@
 package com.loomi.order_processor.app.service.order.handler.item;
 
 import com.loomi.order_processor.domain.order.usecase.CalculateDeliveryDays;
-import com.loomi.order_processor.domain.order.usecase.DeliveryService;
+import com.loomi.order_processor.app.service.delivery.DeliveryService;
 import com.loomi.order_processor.domain.order.usecase.IsItemAvailableForPurchaseUseCase;
 import com.loomi.order_processor.domain.order.usecase.NotifyWhenStockIsLowUseCase;
 import org.springframework.stereotype.Component;
