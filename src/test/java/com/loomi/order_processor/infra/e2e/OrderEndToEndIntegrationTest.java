@@ -115,5 +115,59 @@ class OrderEndToEndIntegrationTest {
 
         verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
     }
+
+    @Test
+    @DisplayName("Should mark order as FAILED and publish OrderFailedEvent when at least one item fails")
+    void shouldMarkOrderAsFailedWhenAtLeastOneItemFailsEndToEnd() {
+        Product okProduct = createPhysicalProduct();
+        Product failingProduct = createPhysicalProduct();
+        failingProduct.stockQuantity(1);
+        productRepository.update(failingProduct);
+
+        RawProductMetadata itemMetadata = new RawProductMetadata();
+        itemMetadata.put("warehouseLocation", "SP");
+
+        CreateOrderItem okItem = CreateOrderItem.builder()
+                .productId(okProduct.id())
+                .quantity(1)
+                .metadata(itemMetadata)
+                .build();
+
+        CreateOrderItem failingItem = CreateOrderItem.builder()
+                .productId(failingProduct.id())
+                .quantity(5)
+                .metadata(itemMetadata)
+                .build();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-out-of-stock",
+                List.of(okItem, failingItem)
+        );
+
+        ResponseEntity<Order> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                Order.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Order createdOrder = response.getBody();
+        assertThat(createdOrder).isNotNull();
+        assertThat(createdOrder.id()).isNotNull();
+
+        UUID orderId = createdOrder.id();
+
+        await()
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Order failed = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(failed.status()).isEqualTo(OrderStatus.FAILED);
+                });
+
+        verify(orderProducer, atLeastOnce()).sendOrderFailedEvent(any());
+    }
+
+    
 }
 
