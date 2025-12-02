@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loomi.order_processor.app.service.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.consumer.OrderCreatedConsumer;
-import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
@@ -109,10 +108,10 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
             ack.acknowledge();
         } catch (OrderNotFoundException e) {
             log.error("Order not found: {}", orderId);
-            return;
+            throw e;
         } catch (Exception e) {
             log.error("Error processing order {}: {}", orderId, e.getMessage(), e);
-            producer.sendOrderFailedEvent(buildFailedEvent(orderId, OrderError.INTERNAL_ERROR.toString()));
+            throw e;
         }
     }
 
