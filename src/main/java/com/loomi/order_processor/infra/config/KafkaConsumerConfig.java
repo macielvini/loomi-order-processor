@@ -96,6 +96,7 @@ public class KafkaConsumerConfig {
         factory.setConsumerFactory(cf);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.setCommonErrorHandler(orderCreatedErrorHandler);
+        factory.setRecordInterceptor(new CorrelationIdInterceptor<>());
         return factory;
     }
 

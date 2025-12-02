@@ -67,20 +67,20 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
         log.info("Received Order Created Event: {}", event);
         UUID orderId = event.getPayload().getId();
 
-        var idempotencyResult = orderEventIdempotencyService.registerEvent(
-                event.getId(),
-                orderId,
-                event.getType(),
-                event.getPayload().getStatus(),
-                event
-        );
-
-        if (idempotencyResult.equals(OrderEventIdempotencyService.Result.ALREADY_PROCESSED)) {
-            ack.acknowledge();
-            return;
-        }
-
         try {
+            var idempotencyResult = orderEventIdempotencyService.registerEvent(
+                    event.getId(),
+                    orderId,
+                    event.getType(),
+                    event.getPayload().getStatus(),
+                    event
+            );
+
+            if (idempotencyResult.equals(OrderEventIdempotencyService.Result.ALREADY_PROCESSED)) {
+                ack.acknowledge();
+                return;
+            }
+
             var order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
 
             var validations = pipeline.validate(order);

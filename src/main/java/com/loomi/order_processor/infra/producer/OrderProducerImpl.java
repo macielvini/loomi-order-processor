@@ -1,5 +1,10 @@
 package com.loomi.order_processor.infra.producer;
 
+import java.nio.charset.StandardCharsets;
+
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class OrderProducerImpl implements OrderProducer {
+
+    private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+    private static final String CORRELATION_ID_MDC_KEY = "correlationId";
 
     private final KafkaTemplate<String, OrderCreatedEvent> orderCreatedTemplate;
     private final KafkaTemplate<String, OrderProcessedEvent> orderProcessedTemplate;
@@ -37,24 +45,37 @@ public class OrderProducerImpl implements OrderProducer {
     @Override
     public void sendOrderCreatedEvent(@NotNull OrderCreatedEvent event) {
         String key = event.getId().toString();
-        orderCreatedTemplate.send(orderCreatedTopic, key, event);
+        ProducerRecord<String, OrderCreatedEvent> record = createProducerRecord(orderCreatedTopic, key, event);
+        orderCreatedTemplate.send(record);
     }
 
     @Override
     public void sendOrderProcessedEvent(@NotNull OrderProcessedEvent event) {
         String key = event.getPayload().getOrderId().toString();
-        orderProcessedTemplate.send(orderProcessedTopic, key, event);
+        ProducerRecord<String, OrderProcessedEvent> record = createProducerRecord(orderProcessedTopic, key, event);
+        orderProcessedTemplate.send(record);
     }
 
     @Override
     public void sendOrderFailedEvent(@NotNull OrderFailedEvent event) {
         String key = event.getPayload().getOrderId().toString();
-        orderFailedTemplate.send(orderFailedTopic, key, event);
+        ProducerRecord<String, OrderFailedEvent> record = createProducerRecord(orderFailedTopic, key, event);
+        orderFailedTemplate.send(record);
     }
 
     @Override
     public void sendOrderPendingApprovalEvent(@NotNull OrderPendingApprovalEvent event) {
         String key = event.getOrderId().toString();
-        orderPendingApprovalTemplate.send(orderPendingApprovalTopic, key, event);
+        ProducerRecord<String, OrderPendingApprovalEvent> record = createProducerRecord(orderPendingApprovalTopic, key, event);
+        orderPendingApprovalTemplate.send(record);
+    }
+
+    private <T> ProducerRecord<String, T> createProducerRecord(String topic, String key, T value) {
+        RecordHeaders headers = new RecordHeaders();
+        String correlationId = MDC.get(CORRELATION_ID_MDC_KEY);
+        if (correlationId != null) {
+            headers.add(CORRELATION_ID_HEADER, correlationId.getBytes(StandardCharsets.UTF_8));
+        }
+        return new ProducerRecord<>(topic, null, key, value, headers);
     }
 }
