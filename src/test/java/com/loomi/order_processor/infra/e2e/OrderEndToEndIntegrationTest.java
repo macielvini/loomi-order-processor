@@ -379,5 +379,72 @@ class OrderEndToEndIntegrationTest {
         verify(orderProducer, never()).sendOrderFailedEvent(any());
     }
 
+    @Test
+    @DisplayName("Should return NOT_FOUND and not create order when at least one product does not exist")
+    void shouldReturnNotFoundAndNotCreateOrderWhenOneProductDoesNotExist() {
+        Product existingProduct = productRepositoryUtils.createPhysicalProduct();
+        UUID nonExistentProductId = UUID.randomUUID();
+
+        RawProductMetadata metadata = new RawProductMetadata();
+        metadata.put("warehouseLocation", "SP");
+
+        CreateOrderItem validItem = CreateOrderItem.builder()
+                .productId(existingProduct.id())
+                .quantity(1)
+                .metadata(metadata)
+                .build();
+
+        CreateOrderItem invalidItem = CreateOrderItem.builder()
+                .productId(nonExistentProductId)
+                .quantity(1)
+                .metadata(metadata)
+                .build();
+
+        int ordersBefore = orderRepository.findAll().size();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-mixed-valid-invalid-product",
+                List.of(validItem, invalidItem)
+        );
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        int ordersAfter = orderRepository.findAll().size();
+        assertThat(ordersAfter).isEqualTo(ordersBefore);
+
+        verify(orderProducer, never()).sendOrderCreatedEvent(any());
+    }
+
+    
+    @Test
+    @DisplayName("Should return BAD_REQUEST and not create order when items list is empty")
+    void shouldReturnBadRequestAndNotCreateOrderWhenItemsListIsEmpty() {
+        int ordersBefore = orderRepository.findAll().size();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-empty-items",
+                List.of()
+        );
+
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        int ordersAfter = orderRepository.findAll().size();
+        assertThat(ordersAfter).isEqualTo(ordersBefore);
+
+        verify(orderProducer, never()).sendOrderCreatedEvent(any());
+    }
+
 }
 
