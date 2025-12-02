@@ -31,7 +31,7 @@ class OrderEventIdempotencyServiceImpl implements OrderEventIdempotencyService {
     ) {
         String jsonPayload = toJson(payload);
 
-        int inserted = repository.insertIfNotExists(
+        var inserted = repository.insertIfNotExists(
                 eventId,
                 orderId,
                 eventType.name(),
@@ -39,7 +39,7 @@ class OrderEventIdempotencyServiceImpl implements OrderEventIdempotencyService {
                 jsonPayload
         );
 
-        if (inserted == 0) {
+        if (inserted.isEmpty()) {
             return Result.ALREADY_PROCESSED;
         }
 
