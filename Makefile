@@ -1,6 +1,9 @@
 APP_NAME=order_processor
 DOCKER_COMPOSE=docker compose
 
+-include .env
+export
+
 .PHONY: all
 
 setup:
@@ -32,4 +35,13 @@ clean:
 	docker rmi $(APP_NAME):latest || true
 
 db-migrate:
+	@echo ">>>> Make sure your variables are pointing to the correct database"
+	@SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/order_processor; \
+	echo "Current value: $$SPRING_DATASOURCE_URL"; \
+	echo "Do you want to continue? (y/n)"; \
+	read continue; \
+	if [ "$$continue" != "y" ]; then \
+		echo "Aborting..."; \
+		exit 1; \
+	fi; \
 	mvn -B flyway:migrate
