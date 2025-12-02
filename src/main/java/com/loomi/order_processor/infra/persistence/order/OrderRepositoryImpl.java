@@ -47,6 +47,11 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    public List<Order> findByCustomerId(@NonNull String customerId) {
+        return jpaOrderRepository.findByCustomerId(customerId);
+    }
+
+    @Override
     public List<Order> findByCustomerIdAndProductIdAndStatus(String customerId, UUID productId, OrderStatus status) {
         List<Order> ordersByCustomerAndStatus = jpaOrderRepository.findByCustomerIdAndStatus(customerId, status);
         return ordersByCustomerAndStatus.stream()
