@@ -3,9 +3,9 @@ spring:
     name: order_processor
 
   datasource:
-    url:
-    username: 
-    password: 
+    url: jdbc:postgresql://localhost:5432/order_processor
+    username: appuser
+    password: apppass
 
   jpa:
     hibernate:
@@ -17,6 +17,7 @@ spring:
     baseline-on-migrate: true
 
   kafka:
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: order-processor-group
       auto-offset-reset: earliest

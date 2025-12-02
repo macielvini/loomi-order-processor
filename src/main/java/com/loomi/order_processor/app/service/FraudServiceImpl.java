@@ -5,18 +5,24 @@ import java.util.Random;
 
 import org.springframework.stereotype.Service;
 
+import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.payment.service.FraudService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class FraudServiceImpl implements FraudService {
+
+    private final OrderProcessingConfig config;
 
     @Override
     public boolean isFraud(Order order) {
         var fraudProbability = 0.05; // 5%
-        var minOrderValueToValidate =  BigDecimal.valueOf(20000.00);
+        BigDecimal fraudThreshold = config.getFraudThreshold();
 
-        if(order.totalAmount().compareTo(minOrderValueToValidate) >= 0) {
+        if(order.totalAmount().compareTo(fraudThreshold) >= 0) {
             var random = new Random().nextDouble();
             return random <= fraudProbability;
         }

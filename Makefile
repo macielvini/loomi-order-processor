@@ -1,7 +1,10 @@
 APP_NAME=order_processor
 DOCKER_COMPOSE=docker compose
 
-.PHONY: setup up down build test clean logs db-migrate
+-include .env
+export
+
+.PHONY: all
 
 setup:
 	$(DOCKER_COMPOSE) build
@@ -18,7 +21,7 @@ coverage:
 	@echo "Coverage report generated in: target/site/jacoco/index.html"
 
 up:
-	$(DOCKER_COMPOSE) up --build
+	$(DOCKER_COMPOSE) up -d --build
 
 down:
 	$(DOCKER_COMPOSE) down
@@ -32,4 +35,13 @@ clean:
 	docker rmi $(APP_NAME):latest || true
 
 db-migrate:
+	@echo ">>>> Make sure your variables are pointing to the correct database"
+	@SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/order_processor; \
+	echo "Current value: $$SPRING_DATASOURCE_URL"; \
+	echo "Do you want to continue? (y/n)"; \
+	read continue; \
+	if [ "$$continue" != "y" ]; then \
+		echo "Aborting..."; \
+		exit 1; \
+	fi; \
 	mvn -B flyway:migrate

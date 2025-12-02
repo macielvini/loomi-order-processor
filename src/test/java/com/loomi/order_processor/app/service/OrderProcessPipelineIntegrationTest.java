@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
@@ -61,9 +62,13 @@ class OrderProcessPipelineIntegrationTest {
         testProductId = UUID.randomUUID();
         testCustomerId = "customer-123";
 
+        OrderProcessingConfig config = new OrderProcessingConfig();
+        config.setHighValueThreshold(new BigDecimal("10000"));
+        config.setFraudThreshold(new BigDecimal("20000"));
+
         List<OrderHandler> globalHandlers = new ArrayList<>();
         globalHandlers.add(new OrderIsPendingHandler());
-        globalHandlers.add(new HighValueOrderHandler());
+        globalHandlers.add(new HighValueOrderHandler(config));
         globalHandlers.add(new PaymentOrderHandler(fraudService, paymentService));
 
         List<com.loomi.order_processor.domain.order.service.OrderItemHandler> itemHandlers = new ArrayList<>();
