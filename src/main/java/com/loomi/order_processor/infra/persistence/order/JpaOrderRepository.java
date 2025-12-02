@@ -12,6 +12,8 @@ import com.loomi.order_processor.domain.order.entity.Order;
 
 public interface JpaOrderRepository extends JpaRepository<Order, UUID> {
     
+    List<Order> findByCustomerId(String customerId);
+    
     List<Order> findByCustomerIdAndStatus(String customerId, OrderStatus status);
 
     @Query(value = """
