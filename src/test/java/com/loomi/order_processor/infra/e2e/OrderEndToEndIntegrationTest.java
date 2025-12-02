@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.math.BigDecimal;
@@ -119,6 +120,22 @@ class OrderEndToEndIntegrationTest {
         return productRepository.save(product);
     }
 
+    private Product createHighValuePhysicalProduct() {
+        RawProductMetadata metadata = new RawProductMetadata();
+        metadata.put("warehouseLocation", "SP");
+
+        Product product = Product.builder()
+                .name("High Value Physical Product")
+                .productType(ProductType.PHYSICAL)
+                .price(new BigDecimal("15000.00"))
+                .stockQuantity(100)
+                .isActive(true)
+                .metadata(metadata)
+                .build();
+
+        return productRepository.save(product);
+    }
+
     @Test
     @DisplayName("Should process a physical order end-to-end from API to PROCESSED status")
     void shouldProcessPhysicalOrderEndToEnd() {
@@ -214,6 +231,53 @@ class OrderEndToEndIntegrationTest {
                 });
 
         verify(orderProducer, atLeastOnce()).sendOrderFailedEvent(any());
+    }
+
+    @Test
+    @DisplayName("Should process high value physical order without fraud end-to-end")
+    void shouldProcessHighValuePhysicalOrderWithoutFraudEndToEnd() {
+        Product product = createHighValuePhysicalProduct();
+
+        RawProductMetadata itemMetadata = new RawProductMetadata();
+        itemMetadata.put("warehouseLocation", "SP");
+
+        CreateOrderItem item = CreateOrderItem.builder()
+                .productId(product.id())
+                .quantity(1)
+                .metadata(itemMetadata)
+                .build();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-high-value",
+                List.of(item)
+        );
+
+        ResponseEntity<Order> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                Order.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Order createdOrder = response.getBody();
+        assertThat(createdOrder).isNotNull();
+        assertThat(createdOrder.id()).isNotNull();
+        assertThat(createdOrder.status()).isEqualTo(OrderStatus.PENDING);
+
+        UUID orderId = createdOrder.id();
+
+        await()
+                .atMost(Duration.ofSeconds(20))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Order processed = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(processed.status()).isEqualTo(OrderStatus.PROCESSED);
+                    assertThat(processed.totalAmount()).isEqualByComparingTo(product.price());
+                });
+
+        verify(orderProducer, atLeastOnce()).sendOrderProcessedEvent(any());
+        verify(orderProducer, never()).sendOrderFailedEvent(any());
+        verify(orderProducer, never()).sendOrderPendingApprovalEvent(any());
     }
 
     @Test
