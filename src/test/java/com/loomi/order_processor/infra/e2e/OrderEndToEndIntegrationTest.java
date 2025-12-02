@@ -154,6 +154,52 @@ class OrderEndToEndIntegrationTest {
     }
 
     @Test
+    @DisplayName("Should process physical order below high value threshold end-to-end")
+    void shouldProcessPhysicalOrderBelowHighValueThresholdEndToEnd() {
+        Product product = productRepositoryUtils.createPhysicalProduct();
+
+        RawProductMetadata itemMetadata = new RawProductMetadata();
+        itemMetadata.put("warehouseLocation", "SP");
+
+        CreateOrderItem item = CreateOrderItem.builder()
+                .productId(product.id())
+                .quantity(1)
+                .metadata(itemMetadata)
+                .build();
+
+        CreateOrderRequest request = new CreateOrderRequest(
+                "customer-below-threshold",
+                List.of(item)
+        );
+
+        ResponseEntity<Order> response = restTemplate.postForEntity(
+                "http://localhost:" + PORT + "/api/orders",
+                request,
+                Order.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Order createdOrder = response.getBody();
+        assertThat(createdOrder).isNotNull();
+        assertThat(createdOrder.id()).isNotNull();
+        assertThat(createdOrder.status()).isEqualTo(OrderStatus.PENDING);
+
+        UUID orderId = createdOrder.id();
+
+        await()
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Order processed = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(processed.status()).isEqualTo(OrderStatus.PROCESSED);
+                    assertThat(processed.totalAmount()).isEqualByComparingTo(product.price());
+                });
+
+        verify(orderEventPublisher, atLeastOnce()).sendOrderProcessedEvent(any());
+        verify(orderEventPublisher, never()).sendOrderPendingApprovalEvent(any());
+    }
+
+    @Test
     @DisplayName("Should send low stock alert when remaining stock for a physical product is below threshold")
     void shouldSendLowStockAlertWhenRemainingStockIsBelowThresholdEndToEnd() {
         Product product = productRepositoryUtils.createPhysicalProduct();
@@ -252,8 +298,8 @@ class OrderEndToEndIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should process high value physical order without fraud end-to-end")
-    void shouldProcessHighValuePhysicalOrderWithoutFraudEndToEnd() {
+    @DisplayName("Should mark high value physical order as PENDING_APPROVAL end-to-end")
+    void shouldMarkHighValuePhysicalOrderAsPendingApprovalEndToEnd() {
         Product product = productRepositoryUtils.createHighValuePhysicalProduct();
 
         RawProductMetadata itemMetadata = new RawProductMetadata();
@@ -288,14 +334,14 @@ class OrderEndToEndIntegrationTest {
                 .atMost(Duration.ofSeconds(20))
                 .pollInterval(Duration.ofMillis(500))
                 .untilAsserted(() -> {
-                    Order processed = orderRepository.findById(orderId).orElseThrow();
-                    assertThat(processed.status()).isEqualTo(OrderStatus.PROCESSED);
-                    assertThat(processed.totalAmount()).isEqualByComparingTo(product.price());
+                    Order pendingApproval = orderRepository.findById(orderId).orElseThrow();
+                    assertThat(pendingApproval.status()).isEqualTo(OrderStatus.PENDING_APPROVAL);
+                    assertThat(pendingApproval.totalAmount()).isEqualByComparingTo(product.price());
                 });
 
-        verify(orderEventPublisher, atLeastOnce()).sendOrderProcessedEvent(any());
+        verify(orderEventPublisher, atLeastOnce()).sendOrderPendingApprovalEvent(any());
         verify(orderEventPublisher, never()).sendOrderFailedEvent(any());
-        verify(orderEventPublisher, never()).sendOrderPendingApprovalEvent(any());
+        verify(orderEventPublisher, never()).sendOrderProcessedEvent(any());
     }
 
     @Test
