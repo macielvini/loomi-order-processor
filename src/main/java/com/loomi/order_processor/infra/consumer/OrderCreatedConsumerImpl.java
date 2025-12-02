@@ -14,6 +14,7 @@ import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderPendingApprovalEvent;
+import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
@@ -75,7 +76,7 @@ public class OrderCreatedConsumerImpl implements OrderCreatedConsumer {
 
             order.status(OrderStatus.PROCESSED);
             orderRepository.update(order);
-            // Send OrderProcessedEvent
+            producer.sendOrderProcessedEvent(OrderProcessedEvent.fromOrder(orderId));
         } catch (OrderNotFoundException e) {
             log.error("Order not found: {}", orderId);
             return;
