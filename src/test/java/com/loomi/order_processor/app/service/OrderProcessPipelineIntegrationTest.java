@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.loomi.order_processor.app.service.order.OrderProcessPipeline;
+import com.loomi.order_processor.app.service.order.handler.OrderItemHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,11 +23,11 @@ import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.event.usecase.AlertEventPublisher;
 import com.loomi.order_processor.domain.order.usecase.DeliveryService;
-import com.loomi.order_processor.domain.order.usecase.HighValueOrderHandler;
-import com.loomi.order_processor.domain.order.usecase.OrderHandler;
-import com.loomi.order_processor.domain.order.usecase.OrderIsPendingHandler;
-import com.loomi.order_processor.domain.order.usecase.PaymentOrderHandler;
-import com.loomi.order_processor.domain.order.usecase.PhysicalItemHandler;
+import com.loomi.order_processor.app.service.order.handler.HighValueOrderHandler;
+import com.loomi.order_processor.app.service.order.handler.OrderHandler;
+import com.loomi.order_processor.app.service.order.handler.OrderIsPendingHandler;
+import com.loomi.order_processor.app.service.order.handler.PaymentOrderHandler;
+import com.loomi.order_processor.app.service.order.handler.PhysicalItemHandler;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.payment.usecase.FraudService;
@@ -72,7 +73,7 @@ class OrderProcessPipelineIntegrationTest {
         globalHandlers.add(new HighValueOrderHandler(config));
         globalHandlers.add(new PaymentOrderHandler(fraudService, paymentService));
 
-        List<com.loomi.order_processor.domain.order.usecase.OrderItemHandler> itemHandlers = new ArrayList<>();
+        List<OrderItemHandler> itemHandlers = new ArrayList<>();
         itemHandlers.add(new PhysicalItemHandler(
                 productRepository,
                 alertProducer,

@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
-import com.loomi.order_processor.domain.order.usecase.OrderHandler;
-import com.loomi.order_processor.domain.order.usecase.OrderItemHandler;
+import com.loomi.order_processor.app.service.order.handler.OrderHandler;
+import com.loomi.order_processor.app.service.order.handler.OrderItemHandler;
 import com.loomi.order_processor.domain.order.valueobject.OrderError;
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.product.dto.ProductType;
