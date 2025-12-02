@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.loomi.order_processor.app.config.OrderProcessingConfig;
 import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
@@ -29,7 +30,11 @@ class HighValueOrderHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new HighValueOrderHandler();
+        OrderProcessingConfig config = new OrderProcessingConfig();
+        config.setHighValueThreshold(new BigDecimal("10000"));
+        config.setFraudThreshold(new BigDecimal("20000"));
+        
+        handler = new HighValueOrderHandler(config);
         testOrderId = UUID.randomUUID();
         testCustomerId = "customer-123";
     }
