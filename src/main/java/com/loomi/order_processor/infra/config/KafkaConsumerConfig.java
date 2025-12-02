@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -18,6 +19,7 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.ExponentialBackOff;
+import org.springframework.util.backoff.FixedBackOff;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
@@ -36,16 +38,16 @@ public class KafkaConsumerConfig {
     @Value("${kafka.topics.order-created-dlq:order-created-dlq}")
     private String orderCreatedDlqTopic;
 
-    @Value("${order-processing.kafka.retry.initial-interval-ms:1000}")
+    @Value("${kafka.retry.initial-interval-ms:1000}")
     private long initialIntervalMs;
 
-    @Value("${order-processing.kafka.retry.multiplier:2.0}")
+    @Value("${kafka.retry.multiplier:2.0}")
     private double multiplier;
 
-    @Value("${order-processing.kafka.retry.max-interval-ms:60000}")
+    @Value("${kafka.retry.max-interval-ms:60000}")
     private long maxIntervalMs;
 
-    @Value("${order-processing.kafka.retry.max-elapsed-time-ms:300000}")
+    @Value("${kafka.retry.max-elapsed-time-ms:300000}")
     private long maxElapsedTimeMs;
 
     @Bean
@@ -64,14 +66,25 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
+    @Profile("!test")
     DefaultErrorHandler orderCreatedErrorHandler(KafkaTemplate<Object, Object> kafkaTemplate) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
-                (record, ex) -> new org.apache.kafka.common.TopicPartition(orderCreatedDlqTopic, record.partition()));
+                (record, ex) -> new org.apache.kafka.common.TopicPartition(orderCreatedDlqTopic, -1));
 
         ExponentialBackOff backOff = new ExponentialBackOff(initialIntervalMs, multiplier);
         backOff.setMaxInterval(maxIntervalMs);
         backOff.setMaxElapsedTime(maxElapsedTimeMs);
 
+        return new DefaultErrorHandler(recoverer, backOff);
+    }
+
+    @Bean
+    @Profile("test")
+    DefaultErrorHandler orderCreatedErrorHandlerTest(KafkaTemplate<Object, Object> kafkaTemplate) {
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
+                (record, ex) -> new org.apache.kafka.common.TopicPartition(orderCreatedDlqTopic, -1));
+
+        var backOff = new FixedBackOff(0, 0);
         return new DefaultErrorHandler(recoverer, backOff);
     }
 
