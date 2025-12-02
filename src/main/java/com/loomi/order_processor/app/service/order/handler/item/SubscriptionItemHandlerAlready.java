@@ -1,8 +1,12 @@
 package com.loomi.order_processor.app.service.order.handler.item;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.loomi.order_processor.domain.order.usecase.CustomerCanBuySubscriptionUseCase;
+import com.loomi.order_processor.domain.order.usecase.SubscriptionsInOrderAreCompatibleUseCase;
+import io.micrometer.common.util.StringUtils;
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
@@ -20,34 +24,14 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class SubscriptionItemHandler implements OrderItemHandler {
+public class SubscriptionItemHandlerAlready implements OrderItemHandler, CustomerCanBuySubscriptionUseCase, SubscriptionsInOrderAreCompatibleUseCase {
 
     private final OrderRepository orderRepository;
     private static final int MAX_ACTIVE_SUBSCRIPTIONS = 5;
+    private static final String GROUP_ID = "GROUP_ID";
 
-    private ValidationResult hasSameSubscriptionGroupInOrder(OrderItem item, Order ctx) {
-        // Check if any group id appears more than once among the subscription items in the order
-        var subscriptionItems = ctx.items().stream()
-            .filter(i -> i.productType() == ProductType.SUBSCRIPTION)
-            .collect(Collectors.toList());
-
-        var groupIdCounts = subscriptionItems.stream()
-            .map(i -> {
-                if (i.metadata() != null && i.metadata().containsKey("GROUP_ID")) {
-                    return i.metadata().get("GROUP_ID").toString();
-                }
-                return null;
-            })
-            .filter(gid -> gid != null)
-            .collect(Collectors.groupingBy(gid -> gid, Collectors.counting()));
-
-        boolean hasDuplicate = groupIdCounts.values().stream().anyMatch(count -> count > 1);
-
-        if (hasDuplicate) {
-            return ValidationResult.fail(OrderError.INCOMPATIBLE_SUBSCRIPTIONS.toString());
-        }
-
-        return ValidationResult.ok();
+    private boolean isMetadataValidForProduct(Product p) {
+        return Objects.nonNull(p.metadata()) && !StringUtils.isBlank(p.metadata().getOrDefault(GROUP_ID, "").toString());
     }
 
     @Override
@@ -62,28 +46,22 @@ public class SubscriptionItemHandler implements OrderItemHandler {
             return ValidationResult.fail(OrderError.SUBSCRIPTION_NOT_AVAILABLE.toString());
         }
 
-        if (product.metadata() == null || !product.metadata().containsKey("GROUP_ID")) {
+        if (!this.isMetadataValidForProduct(product)) {
             log.error("Product {} is missing GROUP_ID in metadata", item.productId());
             return ValidationResult.fail(OrderError.INTERNAL_ERROR.toString());
         }
 
         String groupId = product.metadata().get("GROUP_ID").toString();
 
-        if (!hasSameSubscriptionGroupInOrder(item, ctx).isValid()) {
+        if (this.hasDuplicateSubscriptionInOrder(ctx)) {
             return ValidationResult.fail(OrderError.INCOMPATIBLE_SUBSCRIPTIONS.toString());
         }
 
-        var existingSubscriptionsWithSameGroup = orderRepository
-                .findActiveSubscriptionsByCustomerIdAndGroupId(item.customerId(), groupId);
-
-        if (!existingSubscriptionsWithSameGroup.isEmpty()) {
+        if (this.customerAlreadyHaveSubscription(item.customerId(), groupId)) {
             return ValidationResult.fail(OrderError.DUPLICATE_ACTIVE_SUBSCRIPTION.toString());
         }
 
-        var allActiveSubscriptions = orderRepository.findAllActiveSubscriptionsByCustomerId(item.customerId());
-        long subscriptionCount = allActiveSubscriptions.size();
-
-        if (subscriptionCount >= MAX_ACTIVE_SUBSCRIPTIONS) {
+        if (this.customerReachedMaxActiveSubscriptions(item.customerId())) {
             return ValidationResult.fail(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString());
         }
 
@@ -98,5 +76,35 @@ public class SubscriptionItemHandler implements OrderItemHandler {
         log.info("ITEM {} from ORDER {} processed successfully", item.productId(), ctx.id());
         return OrderProcessResult.ok();
     }
-    
+
+    @Override
+    public boolean customerReachedMaxActiveSubscriptions(String customerId) {
+        var allActiveSubscriptions = orderRepository.findAllActiveSubscriptionsByCustomerId(customerId);
+        long subscriptionCount = allActiveSubscriptions.size();
+
+        return subscriptionCount >= MAX_ACTIVE_SUBSCRIPTIONS;
+    }
+
+    @Override
+    public boolean customerAlreadyHaveSubscription(String customerId, String groupId) {
+        var result = orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(customerId, groupId);
+        return !result.isEmpty();
+    }
+
+    @Override
+    public boolean hasDuplicateSubscriptionInOrder(Order order) {
+        var subscriptionItems = order.items().stream()
+                .filter(i -> i.productType() == ProductType.SUBSCRIPTION)
+                .toList();
+
+        var groupIdCounts = subscriptionItems.stream()
+                .map(i -> {
+                    return i.metadata().get(GROUP_ID);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(gid -> gid, Collectors.counting()));
+
+        // Check for duplicates
+        return groupIdCounts.values().stream().anyMatch(count -> count > 1);
+    }
 }

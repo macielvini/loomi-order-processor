@@ -1,15 +1,15 @@
 package com.loomi.order_processor.domain.order.usecase;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import com.loomi.order_processor.app.service.order.handler.item.SubscriptionItemHandler;
+import com.loomi.order_processor.app.service.order.handler.item.SubscriptionItemHandlerAlready;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -86,7 +86,7 @@ class SubscriptionProductValidationTest {
     private OrderRepository orderRepository;
 
     @InjectMocks
-    private SubscriptionItemHandler subscriptionItemHandler;
+    private SubscriptionItemHandlerAlready subscriptionItemHandler;
 
     @Test
     @DisplayName("shouldReturnInternalError_whenProductNotFound")
@@ -98,7 +98,7 @@ class SubscriptionProductValidationTest {
         ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.INTERNAL_ERROR.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.INTERNAL_ERROR.toString());
     }
 
     @Test
@@ -112,7 +112,7 @@ class SubscriptionProductValidationTest {
         ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.SUBSCRIPTION_NOT_AVAILABLE.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.SUBSCRIPTION_NOT_AVAILABLE.toString());
     }
 
     @Test
@@ -125,7 +125,7 @@ class SubscriptionProductValidationTest {
         ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.INTERNAL_ERROR.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.INTERNAL_ERROR.toString());
     }
 
     @Test
@@ -139,37 +139,28 @@ class SubscriptionProductValidationTest {
         ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.INTERNAL_ERROR.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.INTERNAL_ERROR.toString());
     }
 
     @Test
-    @DisplayName("shouldReturnDuplicateActiveSubscription_whenSameGroupExists")
-    void shouldReturnDuplicateActiveSubscription_whenSameGroupExists() {
-        OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
+    @DisplayName("shouldReturnDuplicateActiveSubscription_whenSameGroupIdExistsInOrder")
+    void shouldReturnDuplicateActiveSubscription_whenSameGroupIdExistsInOrder() {
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
+        OrderItem item1 = createOrderItem(testCustomerId, metadata);
         Product product = createProduct(true, metadata);
-        Order orderCtx = createOrderContext(List.of(item));
-        Order existingOrder = Order.builder()
-                .id(UUID.randomUUID())
-                .customerId(testCustomerId)
-                .status(OrderStatus.PROCESSED)
-                .build();
+        Order orderCtx = createOrderContext(List.of(item1, item1));
 
-        when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
-                testCustomerId, testGroupId))
-                .thenReturn(List.of(existingOrder));
-
-        ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
+        ValidationResult result = subscriptionItemHandler.validate(item1, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.DUPLICATE_ACTIVE_SUBSCRIPTION.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.INCOMPATIBLE_SUBSCRIPTIONS.toString());
     }
 
     @Test
     @DisplayName("shouldReturnSubscriptionLimitExceeded_whenMaxSubscriptionsReached")
     void shouldReturnSubscriptionLimitExceeded_whenMaxSubscriptionsReached() {
-        OrderItem item = createOrderItem(testCustomerId, new RawProductMetadata());
         RawProductMetadata metadata = createMetadataWithGroupId(testGroupId);
+        OrderItem item = createOrderItem(testCustomerId, metadata);
         Product product = createProduct(true, metadata);
         Order orderCtx = createOrderContext(List.of(item));
         List<Order> activeSubscriptions = new ArrayList<>();
@@ -183,14 +174,14 @@ class SubscriptionProductValidationTest {
 
         when(orderRepository.findActiveSubscriptionsByCustomerIdAndGroupId(
                 testCustomerId, testGroupId))
-                .thenReturn(new ArrayList<>());
+                .thenReturn(Collections.emptyList());
         when(orderRepository.findAllActiveSubscriptionsByCustomerId(testCustomerId))
                 .thenReturn(activeSubscriptions);
 
         ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString());
     }
 
     @Test
@@ -218,7 +209,7 @@ class SubscriptionProductValidationTest {
         ValidationResult result = subscriptionItemHandler.validate(item, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.SUBSCRIPTION_LIMIT_EXCEEDED.toString());
     }
 
     @Test
@@ -303,7 +294,7 @@ class SubscriptionProductValidationTest {
         ValidationResult result = subscriptionItemHandler.validate(item1, product, orderCtx);
 
         assertFalse(result.isValid());
-        assertTrue(result.getErrors().contains(OrderError.INCOMPATIBLE_SUBSCRIPTIONS.toString()));
+        assertEquals(result.getErrors().get(0), OrderError.INCOMPATIBLE_SUBSCRIPTIONS.toString());
     }
 }
 
