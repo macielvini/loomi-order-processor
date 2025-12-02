@@ -11,11 +11,11 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <root level="${LOG_LEVEL:-INFO}">
         <appender-ref ref="CONSOLE"/>
     </root>
 
-    <logger name="com.loomi.order_processor" level="DEBUG"/>
+    <logger name="com.loomi.order_processor" level="${LOG_LEVEL:-INFO}"/>
     <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="ERROR"/>
     <logger name="org.apache.kafka.common.metrics.Metrics" level="WARN"/>
     <logger name="org.apache.kafka.clients.admin.AdminClientConfig" level="ERROR"/>
