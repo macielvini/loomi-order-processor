@@ -5,9 +5,9 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.app.config.OrderProcessingConfig;
-import com.loomi.order_processor.domain.order.dto.OrderError;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.valueobject.OrderError;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 
 import lombok.RequiredArgsConstructor;

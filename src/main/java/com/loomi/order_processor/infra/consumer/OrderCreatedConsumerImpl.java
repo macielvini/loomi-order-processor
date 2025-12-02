@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loomi.order_processor.app.service.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.consumer.OrderCreatedConsumer;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderFailedEvent;
@@ -20,6 +19,8 @@ import com.loomi.order_processor.domain.order.exception.OrderNotFoundException;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.service.OrderEventIdempotencyService;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

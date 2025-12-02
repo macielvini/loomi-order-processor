@@ -12,11 +12,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.loomi.order_processor.app.config.OrderProcessingConfig;
-import com.loomi.order_processor.domain.order.dto.OrderError;
-import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.valueobject.OrderError;
+import com.loomi.order_processor.domain.order.valueobject.OrderItem;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;

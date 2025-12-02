@@ -3,7 +3,7 @@ package com.loomi.order_processor.domain.order.service;
 import java.util.UUID;
 
 import com.loomi.order_processor.domain.order.dto.OrderEventType;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 public interface OrderEventIdempotencyService {
 

@@ -5,10 +5,10 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
-import com.loomi.order_processor.domain.order.dto.OrderError;
-import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.valueobject.OrderError;
+import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 import com.loomi.order_processor.domain.product.entity.Product;

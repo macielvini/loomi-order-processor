@@ -28,13 +28,13 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.loomi.order_processor.app.service.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
-import com.loomi.order_processor.domain.order.dto.OrderItem;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedPayload;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
+import com.loomi.order_processor.domain.order.valueobject.OrderItem;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 import com.loomi.order_processor.infra.consumer.OrderCreatedConsumerImpl;
 import com.loomi.order_processor.infra.persistence.order.OrderEventJpaRepository;

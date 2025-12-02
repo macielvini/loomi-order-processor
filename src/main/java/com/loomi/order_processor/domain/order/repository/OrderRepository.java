@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 public interface OrderRepository {
 

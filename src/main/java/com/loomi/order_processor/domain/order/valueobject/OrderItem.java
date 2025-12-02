@@ -1,4 +1,4 @@
-package com.loomi.order_processor.domain.order.dto;
+package com.loomi.order_processor.domain.order.valueobject;
 
 import java.math.BigDecimal;
 import java.util.UUID;

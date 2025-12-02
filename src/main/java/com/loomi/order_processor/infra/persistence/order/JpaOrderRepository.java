@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 public interface JpaOrderRepository extends JpaRepository<Order, UUID> {
     

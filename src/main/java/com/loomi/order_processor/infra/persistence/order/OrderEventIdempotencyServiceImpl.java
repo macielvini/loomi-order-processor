@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loomi.order_processor.domain.order.dto.OrderEventType;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.service.OrderEventIdempotencyService;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 import lombok.RequiredArgsConstructor;
 

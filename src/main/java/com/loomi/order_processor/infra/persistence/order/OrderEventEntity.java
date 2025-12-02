@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.loomi.order_processor.domain.order.dto.OrderEventType;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

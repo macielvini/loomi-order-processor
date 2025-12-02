@@ -12,8 +12,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.loomi.order_processor.domain.order.dto.OrderItem;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
+import com.loomi.order_processor.domain.order.valueobject.OrderItem;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

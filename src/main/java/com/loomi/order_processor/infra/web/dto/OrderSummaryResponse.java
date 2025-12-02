@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record OrderSummaryResponse(

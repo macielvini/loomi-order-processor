@@ -2,9 +2,9 @@ package com.loomi.order_processor.domain.order.service;
 
 import org.springframework.stereotype.Service;
 
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 
 @Service

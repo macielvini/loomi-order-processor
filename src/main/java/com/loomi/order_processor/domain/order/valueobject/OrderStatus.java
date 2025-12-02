@@ -1,4 +1,4 @@
-package com.loomi.order_processor.domain.order.dto;
+package com.loomi.order_processor.domain.order.valueobject;
 
 public enum OrderStatus {
     PENDING,

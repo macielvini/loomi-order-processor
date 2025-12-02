@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import com.loomi.order_processor.domain.order.dto.OrderItem;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
+import com.loomi.order_processor.domain.order.valueobject.OrderItem;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -8,9 +8,9 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

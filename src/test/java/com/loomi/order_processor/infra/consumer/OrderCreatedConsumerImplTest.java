@@ -20,7 +20,6 @@ import org.springframework.kafka.support.Acknowledgment;
 
 import com.loomi.order_processor.app.service.OrderProcessPipeline;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
-import com.loomi.order_processor.domain.order.dto.OrderStatus;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedEvent;
 import com.loomi.order_processor.domain.order.entity.OrderCreatedPayload;
@@ -28,6 +27,7 @@ import com.loomi.order_processor.domain.order.entity.OrderProcessedEvent;
 import com.loomi.order_processor.domain.order.producer.OrderProducer;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;
 import com.loomi.order_processor.domain.order.service.OrderEventIdempotencyService;
+import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.product.dto.ValidationResult;
 
 @ExtendWith(MockitoExtension.class)
