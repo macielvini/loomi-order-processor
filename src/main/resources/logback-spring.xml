@@ -16,4 +16,14 @@
     </root>
 
     <logger name="com.loomi.order_processor" level="DEBUG"/>
+    <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="ERROR"/>
+    <logger name="org.apache.kafka.common.metrics.Metrics" level="WARN"/>
+    <logger name="org.apache.kafka.clients.admin.AdminClientConfig" level="ERROR"/>
+    <logger name="org.springframework.boot.autoconfigure.orm.jpa" level="ERROR"/>
+    <logger name="com.zaxxer.hikari.HikariDataSource" level="ERROR"/>
+    <logger name="org.apache.kafka.clients.consumer.internals.ConsumerCoordinator" level="WARN"/>
+    <logger name="org.apache.catalina.core.ContainerBase" level="ERROR"/>
+    <logger name="org.apache.kafka.clients.producer.ProducerConfig" level="ERROR"/>
+
+
 </configuration>
