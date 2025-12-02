@@ -1,5 +1,7 @@
 package com.loomi.order_processor.infra.producer;
 
+import java.nio.charset.StandardCharsets;
+
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.slf4j.MDC;
@@ -72,7 +74,7 @@ public class OrderProducerImpl implements OrderProducer {
         RecordHeaders headers = new RecordHeaders();
         String correlationId = MDC.get(CORRELATION_ID_MDC_KEY);
         if (correlationId != null) {
-            headers.add(CORRELATION_ID_HEADER, correlationId.getBytes());
+            headers.add(CORRELATION_ID_HEADER, correlationId.getBytes(StandardCharsets.UTF_8));
         }
         return new ProducerRecord<>(topic, null, key, value, headers);
     }
