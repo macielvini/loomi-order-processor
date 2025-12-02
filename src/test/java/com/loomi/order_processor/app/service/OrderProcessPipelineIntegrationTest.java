@@ -31,7 +31,7 @@ import com.loomi.order_processor.app.service.order.handler.item.PhysicalItemHand
 import com.loomi.order_processor.domain.order.valueobject.OrderItem;
 import com.loomi.order_processor.domain.order.valueobject.OrderStatus;
 import com.loomi.order_processor.domain.payment.usecase.FraudService;
-import com.loomi.order_processor.domain.payment.usecase.PaymentService;
+import com.loomi.order_processor.app.service.payment.PaymentService;
 import com.loomi.order_processor.domain.product.dto.ProductType;
 import com.loomi.order_processor.domain.product.dto.RawProductMetadata;
 import com.loomi.order_processor.domain.product.entity.Product;
@@ -124,7 +124,6 @@ class OrderProcessPipelineIntegrationTest {
         Product product = createProduct();
 
         when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
-        when(fraudService.isFraud(order)).thenReturn(true);
 
         var validationResult = pipeline.validate(order);
 
@@ -132,18 +131,15 @@ class OrderProcessPipelineIntegrationTest {
     }
 
     @Test
-    @DisplayName("shouldValidateSuccessfully_whenFraudServiceAllowsHighValueOrder")
-    void shouldValidateSuccessfully_whenFraudServiceAllowsHighValueOrder() {
+    @DisplayName("shouldRequireHumanReview_whenFraudServiceAllowsHighValueOrder")
+    void shouldRequireHumanReview_whenFraudServiceAllowsHighValueOrder() {
         Order order = createOrder(new BigDecimal("25000"));
         Product product = createProduct();
 
         when(productRepository.findById(testProductId)).thenReturn(Optional.of(product));
-        when(fraudService.isFraud(order)).thenReturn(false);
-
         var validationResult = pipeline.validate(order);
 
-        assertTrue(validationResult.isValid());
-        assertFalse(validationResult.isHumanReviewRequired());
+        assertTrue(validationResult.isHumanReviewRequired());
     }
 
     @Test

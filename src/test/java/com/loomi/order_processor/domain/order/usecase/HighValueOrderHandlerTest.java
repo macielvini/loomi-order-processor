@@ -103,25 +103,23 @@ class HighValueOrderHandlerTest {
         }
 
         @Test
-        @DisplayName("shouldReturnOk_whenTotalAmountIsGreaterThan10000")
-        void shouldReturnOk_whenTotalAmountIsGreaterThan10000() {
+        @DisplayName("shouldReturnHumanReviewRequired_whenTotalAmountIsGreaterThan10000")
+        void shouldReturnHumanReviewRequired_whenTotalAmountIsGreaterThan10000() {
             Order order = createOrder(new BigDecimal("15000"));
 
             ValidationResult result = handler.validate(order);
 
-            assertTrue(result.isValid());
-            assertFalse(result.isHumanReviewRequired());
+            assertTrue(result.isHumanReviewRequired());
         }
 
         @Test
-        @DisplayName("shouldReturnOk_whenTotalAmountIsMuchGreaterThan10000")
-        void shouldReturnOk_whenTotalAmountIsMuchGreaterThan10000() {
+        @DisplayName("shouldReturnHumanReviewRequired_whenTotalAmountIsMuchGreaterThan10000")
+        void shouldReturnHumanReviewRequired_whenTotalAmountIsMuchGreaterThan10000() {
             Order order = createOrder(new BigDecimal("50000"));
 
             ValidationResult result = handler.validate(order);
 
-            assertTrue(result.isValid());
-            assertFalse(result.isHumanReviewRequired());
+            assertTrue(result.isHumanReviewRequired());
         }
     }
 

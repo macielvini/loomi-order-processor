@@ -1,4 +1,4 @@
-package com.loomi.order_processor.domain.payment.usecase;
+package com.loomi.order_processor.app.service.payment;
 
 import com.loomi.order_processor.domain.order.entity.Order;
 
