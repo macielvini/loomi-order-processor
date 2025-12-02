@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-class OrderEventIdempotencyServiceImpl implements OrderEventIdempotencyService {
+public class OrderEventIdempotencyServiceImpl implements OrderEventIdempotencyService {
 
     private final OrderEventJpaRepository repository;
     private final ObjectMapper objectMapper;
