@@ -1,6 +1,9 @@
 package com.loomi.order_processor.app.service.order.handler.item;
 
+import com.loomi.order_processor.domain.order.usecase.CalculateDeliveryDays;
 import com.loomi.order_processor.domain.order.usecase.DeliveryService;
+import com.loomi.order_processor.domain.order.usecase.IsAvailableUseCase;
+import com.loomi.order_processor.domain.order.usecase.NotifyWhenStockIsLowUseCase;
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
@@ -18,10 +21,12 @@ import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Objects;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PhysicalItemHandler implements OrderItemHandler {
+public class PhysicalItemHandler implements OrderItemHandler, CalculateDeliveryDays, IsAvailableUseCase, NotifyWhenStockIsLowUseCase {
 
     private static final int LOW_STOCK_THRESHOLD = 5;
 
@@ -70,14 +75,8 @@ public class PhysicalItemHandler implements OrderItemHandler {
         }
 
         // Stock validation
-        if (!product.isActive()) {
+        if (!this.isItemAvailable(item, product)) {
             log.warn("Product {} is no longer active in order {}", item.productId(), ctx.id());
-            return ValidationResult.fail(OrderError.OUT_OF_STOCK.toString());
-        }
-
-        if (product.stockQuantity() == null || product.stockQuantity() < item.quantity()) {
-            log.warn("Insufficient stock for product {} in order {}: required {}, available {}", 
-                    item.productId(), ctx.id(), item.quantity(), product.stockQuantity());
             return ValidationResult.fail(OrderError.OUT_OF_STOCK.toString());
         }
 
@@ -89,26 +88,48 @@ public class PhysicalItemHandler implements OrderItemHandler {
         // Stock processing
         int currentStock = product.stockQuantity();
         int remainingStock = currentStock - item.quantity();
+        product.stockQuantity(remainingStock);
+        productRepository.update(product);
 
         if (remainingStock < LOW_STOCK_THRESHOLD) {
             log.info("Low stock alert for product {}: remaining stock {} is below threshold {}", 
                     item.productId(), remainingStock, LOW_STOCK_THRESHOLD);
-            var alertEvent = LowStockAlertEvent.fromProduct(
-                    item.productId(), 
-                    remainingStock, 
-                    LOW_STOCK_THRESHOLD);
-            alertProducer.sendLowStockAlert(alertEvent);
+            this.notifyWhenStockIsLow(product);
         }
 
-        product.stockQuantity(remainingStock);
-        productRepository.update(product);
-        var location = getWarehouseLocation(item);
         // Delivery time calculation
-        int deliveryDays = deliveryService.calculateDeliveryDays(location);
+        var location = getWarehouseLocation(item);
+        int deliveryDays = this.calculateDeliveryDaysForWarehouse(product, location);
         item.metadata().put("deliveryDays", deliveryDays);
 
         return OrderProcessResult.ok();
     }
 
+    @Override
+    public int calculateDeliveryDaysForWarehouse(Product product, String warehouse) {
+        return deliveryService.calculateDeliveryDays(warehouse);
+    }
+
+    @Override
+    public boolean isItemAvailable(OrderItem item, Product product) {
+        if (!product.isActive()) {
+            return false;
+        }
+
+        if (Objects.isNull(product.stockQuantity()) || product.stockQuantity() < item.quantity()) {;
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void notifyWhenStockIsLow(Product product) {
+        var alertEvent = LowStockAlertEvent.fromProduct(
+                product.id(),
+                product.stockQuantity(),
+                LOW_STOCK_THRESHOLD);
+        alertProducer.sendLowStockAlert(alertEvent);
+    }
 }
 
