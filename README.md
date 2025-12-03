@@ -54,3 +54,4 @@ As decisões arquiteturais do projeto estão documentadas em [docs/adr/](./docs/
 | [0004](./docs/adr/0004-handler-pattern-processamento.md) | Handler Pattern para Validação e Processamento |
 | [0005](./docs/adr/0005-logs-correlacao.md) | Estruturação de Logs e Correlação |
 | [0006](./docs/adr/0006-kafka-zookeeper.md) | Kafka com Zookeeper e Kafka UI |
+| [0007](./docs/adr/0007-kafka-topics-split.md) | Kafka Topics Split by Event Type |
