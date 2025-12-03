@@ -53,3 +53,4 @@ As decisões arquiteturais do projeto estão documentadas em [docs/adr/](./docs/
 | [0003](./docs/adr/0003-dlq-retry-kafka.md) | Dead Letter Queue e Retry no Kafka |
 | [0004](./docs/adr/0004-handler-pattern-processamento.md) | Handler Pattern para Validação e Processamento |
 | [0005](./docs/adr/0005-logs-correlacao.md) | Estruturação de Logs e Correlação |
+| [0006](./docs/adr/0006-kafka-zookeeper.md) | Kafka com Zookeeper e Kafka UI |

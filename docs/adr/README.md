@@ -15,6 +15,7 @@ Um ADR (Architecture Decision Record) é um documento que captura uma decisão a
 | [0003](./0003-dlq-retry-kafka.md) | Dead Letter Queue e Retry no Kafka | Aceito |
 | [0004](./0004-handler-pattern-processamento.md) | Handler Pattern para Validação e Processamento | Aceito |
 | [0005](./0005-logs-correlacao.md) | Estruturação de Logs e Correlação | Aceito |
+| [0006](./0006-kafka-zookeeper.md) | Kafka com Zookeeper e Kafka UI | Aceito |
 
 ## Formato
 
