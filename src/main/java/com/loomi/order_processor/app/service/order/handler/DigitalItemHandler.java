@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import com.loomi.order_processor.domain.notification.service.EmailService;
+import com.loomi.order_processor.domain.notification.usecase.EmailService;
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
 import com.loomi.order_processor.domain.order.entity.Order;
 import com.loomi.order_processor.domain.order.repository.OrderRepository;

@@ -2,7 +2,7 @@ package com.loomi.order_processor.infra.notification;
 
 import org.springframework.stereotype.Service;
 
-import com.loomi.order_processor.domain.notification.service.EmailService;
+import com.loomi.order_processor.domain.notification.usecase.EmailService;
 
 import lombok.extern.slf4j.Slf4j;
 
