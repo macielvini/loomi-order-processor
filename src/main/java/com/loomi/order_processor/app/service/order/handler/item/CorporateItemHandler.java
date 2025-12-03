@@ -120,8 +120,8 @@ public class CorporateItemHandler implements
             return false;
         }
 
-        var paymentTerms = item.metadata().getOrDefault("paymentTerms", "").toString();
-        if (StringUtils.isBlank(paymentTerms) || !VALID_PAYMENT_TERMS.contains(paymentTerms.toUpperCase())) {
+        var paymentTerms = getPaymentTerms(item);
+        if (StringUtils.isBlank(paymentTerms) || !VALID_PAYMENT_TERMS.contains(paymentTerms)) {
             log.warn("Missing paymentTerms in metadata for product {}", item.productId());
             return false;
         }

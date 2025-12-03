@@ -473,7 +473,8 @@ class OrderEndToEndIntegrationTest {
 
         RawProductMetadata corporateMetadata = new RawProductMetadata();
         corporateMetadata.put("cnpj", "12.345.678/0001-90");
-        corporateMetadata.put("paymentTerms", "NET_60");
+        corporateMetadata.put("ie", "123456789-00");
+        corporateMetadata.put("paymentTerms", "NET_30");
 
         CreateOrderItem corporateItem = CreateOrderItem.builder()
                 .productId(corporateProduct.id())

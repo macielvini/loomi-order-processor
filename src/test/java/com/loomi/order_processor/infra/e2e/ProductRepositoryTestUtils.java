@@ -102,7 +102,7 @@ class ProductRepositoryTestUtils {
                 .name("Corporate High Value Product")
                 .productType(ProductType.CORPORATE)
                 .price(new BigDecimal("60000.00"))
-                .stockQuantity(0)
+                .stockQuantity(100)
                 .isActive(true)
                 .metadata(metadata)
                 .build();
