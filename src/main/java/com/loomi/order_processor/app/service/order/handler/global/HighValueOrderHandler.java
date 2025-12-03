@@ -3,6 +3,7 @@ package com.loomi.order_processor.app.service.order.handler.global;
 import java.math.BigDecimal;
 
 import com.loomi.order_processor.domain.order.usecase.IsManualValidationRequiredUseCase;
+import com.loomi.order_processor.domain.order.valueobject.OrderError;
 import org.springframework.stereotype.Service;
 
 import com.loomi.order_processor.app.config.OrderProcessingConfig;
@@ -13,6 +14,8 @@ import com.loomi.order_processor.domain.product.dto.ValidationResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.isNull;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,9 @@ public class HighValueOrderHandler implements OrderHandler, IsManualValidationRe
 
     @Override
     public ValidationResult validate(Order order) {
+        if (isNull(order.totalAmount())) {
+            return ValidationResult.fail(OrderError.INTERNAL_ERROR.toString());
+        }
         return this.checkValueRequiresManualValidation(order.totalAmount()) ? ValidationResult.requireHumanReview() : ValidationResult.ok();
     }
 
