@@ -3,6 +3,7 @@ package com.loomi.order_processor.app.service.order.handler.item;
 import java.math.BigDecimal;
 import java.util.Set;
 
+import com.loomi.order_processor.domain.order.usecase.*;
 import org.springframework.stereotype.Component;
 
 import com.loomi.order_processor.domain.order.dto.OrderProcessResult;
@@ -17,51 +18,27 @@ import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CorporateItemHandler implements OrderItemHandler {
+public class CorporateItemHandler implements
+        OrderItemHandler,
+        IsManualValidationRequiredUseCase,
+        IsItemAvailableForPurchaseUseCase,
+        CorporateOrderValidationUseCase,
+        ValidateCorporateInformationUseCase {
 
     private static final BigDecimal MAX_CREDIT_LIMIT = new BigDecimal("100000");
     private static final BigDecimal HIGH_VALUE_THRESHOLD = new BigDecimal("50000");
     private static final int VOLUME_DISCOUNT_THRESHOLD = 100;
     private static final double VOLUME_DISCOUNT_PERCENTAGE = 0.15;
     private static final Set<String> VALID_PAYMENT_TERMS = Set.of("NET_30", "NET_60", "NET_90");
-    private static final int CNPJ_LENGTH = 14;
 
-    private ValidationResult validateMetadata(OrderItem item) {
-        if (item.metadata() == null) {
-            log.warn("Missing metadata for corporate product {}", item.productId());
-            return ValidationResult.fail(OrderError.INVALID_CORPORATE_DATA.toString());
-        }
-
-        var cnpj = item.metadata().getOrDefault("cnpj", "").toString();
-        if (StringUtils.isBlank(cnpj)) {
-            log.warn("Missing cnpj in metadata for product {}", item.productId());
-            return ValidationResult.fail(OrderError.INVALID_CORPORATE_DATA.toString());
-        }
-
-        var paymentTerms = item.metadata().getOrDefault("paymentTerms", "").toString();
-        if (StringUtils.isBlank(paymentTerms)) {
-            log.warn("Missing paymentTerms in metadata for product {}", item.productId());
-            return ValidationResult.fail(OrderError.INVALID_CORPORATE_DATA.toString());
-        }
-
-        return ValidationResult.ok();
-    }
-
-    private String normalizeCnpj(String cnpj) {
-        return cnpj.replaceAll("[^0-9]", "");
-    }
-
-    private boolean isValidCnpjFormat(String cnpj) {
-        String normalized = normalizeCnpj(cnpj);
-        return normalized.length() == CNPJ_LENGTH;
-    }
-
-    private String getCnpj(OrderItem item) {
-        var cnpj = item.metadata().get("cnpj");
-        return cnpj != null ? cnpj.toString() : "";
+    private String normalizeString(String str) {
+        return str.replaceAll("[^0-9]", "");
     }
 
     private String getPaymentTerms(OrderItem item) {
@@ -76,38 +53,19 @@ public class CorporateItemHandler implements OrderItemHandler {
 
     @Override
     public ValidationResult validate(OrderItem item, Product product, Order ctx) {
-        var metadataValidation = validateMetadata(item);
-        if (!metadataValidation.isValid()) {
-            return metadataValidation;
-        }
-
-        String cnpj = getCnpj(item);
-        if (!isValidCnpjFormat(cnpj)) {
-            log.error("Invalid CNPJ format for product {}: {}", item.productId(), cnpj);
+        if (!this.orderHasRequiredCustomerInformation(item)) {
             return ValidationResult.fail(OrderError.INVALID_CORPORATE_DATA.toString());
         }
 
-        String paymentTerms = getPaymentTerms(item);
-        if (!VALID_PAYMENT_TERMS.contains(paymentTerms)) {
-            log.error("Invalid paymentTerms for product {} in order {}: {}", item.productId(), ctx.id(), paymentTerms);
-            return ValidationResult.fail(OrderError.INVALID_CORPORATE_DATA.toString());
+        if (!this.isItemAvailable(item, product)) {
+            return ValidationResult.fail(OrderError.OUT_OF_STOCK.toString());
         }
 
-        if (!product.isActive()) {
-            log.error("Product {} is not active", item.productId());
-            return ValidationResult.fail(OrderError.INVALID_CORPORATE_DATA.toString());
-        }
-
-        BigDecimal orderTotal = ctx.totalAmount();
-        if (orderTotal.compareTo(MAX_CREDIT_LIMIT) > 0) {
-            log.info("Order {} with total ${} exceeds credit limit of ${} for customer {}",
-                    ctx.id(), orderTotal, MAX_CREDIT_LIMIT, ctx.customerId());
+        if (!this.hasEnoughCreditForOrder(ctx)) {
             return ValidationResult.fail(OrderError.CREDIT_LIMIT_EXCEEDED.toString());
         }
 
-        if (orderTotal.compareTo(HIGH_VALUE_THRESHOLD) > 0) {
-            log.info("Order {} requires manual approval: total amount ${} exceeds threshold of ${}",
-                    ctx.id(), orderTotal, HIGH_VALUE_THRESHOLD);
+        if (this.checkValueRequiresManualValidation(ctx.totalAmount())) {
             return ValidationResult.requireHumanReview();
         }
 
@@ -116,18 +74,14 @@ public class CorporateItemHandler implements OrderItemHandler {
 
     @Override
     public OrderProcessResult process(OrderItem item, Product product, Order ctx) {
-        if (item.quantity() >= VOLUME_DISCOUNT_THRESHOLD) {
+        if (this.shouldApplyDiscount(item)) {
             int blocks = item.quantity() / VOLUME_DISCOUNT_THRESHOLD;
             BigDecimal unitPrice = item.price();
 
             BigDecimal discountUnits = BigDecimal.valueOf(blocks * VOLUME_DISCOUNT_THRESHOLD);
             BigDecimal discountBase = unitPrice.multiply(discountUnits);
             BigDecimal discountAmount = discountBase.multiply(BigDecimal.valueOf(VOLUME_DISCOUNT_PERCENTAGE));
-
-
             item.metadata().put("discountAmount", discountAmount);
-            log.info("Applied volume discount of {}% to corporate item {} in order {}: quantity={}, blocks={}, unitPrice={}, discountAmount={}",
-                    VOLUME_DISCOUNT_PERCENTAGE * 100, item.productId(), ctx.id(), item.quantity(), blocks, unitPrice, discountAmount);
         }
 
         String paymentTerms = getPaymentTerms(item);
@@ -135,5 +89,63 @@ public class CorporateItemHandler implements OrderItemHandler {
         log.info("Configured payment terms {} for corporate item {}", paymentTerms, item.productId());
 
         return OrderProcessResult.ok();
+    }
+
+    @Override
+    public boolean checkValueRequiresManualValidation(BigDecimal value) {
+        return value.compareTo(HIGH_VALUE_THRESHOLD) > 0;
+    }
+
+    @Override
+    public boolean isCnpjValid(String cnpj) {
+        String normalized = normalizeString(cnpj);
+        return normalized.length() == 14;
+    }
+
+    @Override
+    public boolean isInscricaoEstadualValid(String ie) {
+        String normalized = normalizeString(ie);
+        return normalized.length() >= 9 && normalized.length() <= 13;
+    }
+
+    @Override
+    public boolean orderHasRequiredCustomerInformation(OrderItem item) {
+        if (isNull(item.metadata())) {
+            return false;
+        }
+
+        var cnpj = item.metadata().getOrDefault("cnpj", "").toString();
+        var ie = item.metadata().getOrDefault("ie", "").toString();
+        if (StringUtils.isBlank(cnpj) || StringUtils.isBlank(ie)) {
+            return false;
+        }
+
+        var paymentTerms = item.metadata().getOrDefault("paymentTerms", "").toString();
+        if (StringUtils.isBlank(paymentTerms) || !VALID_PAYMENT_TERMS.contains(paymentTerms.toUpperCase())) {
+            log.warn("Missing paymentTerms in metadata for product {}", item.productId());
+            return false;
+        }
+
+        if (!this.isCnpjValid(cnpj) || !this.isInscricaoEstadualValid(ie)) {
+            log.error("Invalid customer information on Order  {}: {}", item.productId(), item.metadata());
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean shouldApplyDiscount(OrderItem item) {
+        return item.quantity() >= VOLUME_DISCOUNT_THRESHOLD;
+    }
+
+    @Override
+    public boolean hasEnoughCreditForOrder(Order order) {
+        return order.totalAmount().compareTo(MAX_CREDIT_LIMIT) <= 0;
+    }
+
+    @Override
+    public boolean isItemAvailable(OrderItem item, Product ctx) {
+        return ctx.isActive() && nonNull(ctx.stockQuantity()) && ctx.stockQuantity() >= item.quantity();
     }
 }

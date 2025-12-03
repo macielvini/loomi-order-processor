@@ -1,8 +1,6 @@
 package com.loomi.order_processor.domain.order.usecase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -62,17 +60,21 @@ class CorporateProductValidationTest {
                 .productType(ProductType.CORPORATE)
                 .price(BigDecimal.valueOf(1000.00))
                 .isActive(isActive)
+                .stockQuantity(1000)
                 .metadata(new RawProductMetadata())
                 .build();
     }
 
-    private RawProductMetadata createMetadata(String cnpj, String paymentTerms) {
+    private RawProductMetadata createMetadata(String cnpj, String paymentTerms, String ie) {
         RawProductMetadata metadata = new RawProductMetadata();
         if (cnpj != null) {
             metadata.put("cnpj", cnpj);
         }
         if (paymentTerms != null) {
             metadata.put("paymentTerms", paymentTerms);
+        }
+        if (ie != null) {
+            metadata.put("ie", ie);
         }
         return metadata;
     }
@@ -114,223 +116,223 @@ class CorporateProductValidationTest {
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
+            assertEquals(false, result.isValid());
+            assertEquals(true, result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
         }
 
         @Test
         @DisplayName("shouldReturnInvalidCorporateData_whenCnpjIsMissing")
         void shouldReturnInvalidCorporateData_whenCnpjIsMissing() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata(null, "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata(null, "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
+            assertEquals(false, result.isValid());
+            assertEquals(true, result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
         }
 
         @Test
         @DisplayName("shouldReturnInvalidCorporateData_whenPaymentTermsIsMissing")
         void shouldReturnInvalidCorporateData_whenPaymentTermsIsMissing() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", null));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", null, "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
+            assertEquals(false, result.isValid());
+            assertEquals(true, result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
         }
 
         @Test
         @DisplayName("shouldReturnInvalidCorporateData_whenCnpjIsInvalidFormat")
         void shouldReturnInvalidCorporateData_whenCnpjIsInvalidFormat() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("123", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("123", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
+            assertEquals(false, result.isValid());
+            assertEquals(true, result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenCnpjHasValidFormat")
         void shouldReturnOk_whenCnpjHasValidFormat() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
+            assertEquals(true, result.isValid());
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenCnpjHasValidFormatWithoutFormatting")
         void shouldReturnOk_whenCnpjHasValidFormatWithoutFormatting() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12345678000190", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12345678000190", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
+            assertEquals(true, result.isValid());
         }
 
         @Test
         @DisplayName("shouldReturnInvalidCorporateData_whenPaymentTermsIsInvalid")
         void shouldReturnInvalidCorporateData_whenPaymentTermsIsInvalid() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_45"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_45", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
+            assertEquals(false, result.isValid());
+            assertEquals(true, result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenPaymentTermsIsNET_30")
         void shouldReturnOk_whenPaymentTermsIsNET_30() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
+            assertEquals(true, result.isValid());
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenPaymentTermsIsNET_60")
         void shouldReturnOk_whenPaymentTermsIsNET_60() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_60"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_60", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
+            assertEquals(true, result.isValid());
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenPaymentTermsIsNET_90")
         void shouldReturnOk_whenPaymentTermsIsNET_90() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_90"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_90", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
+            assertEquals(true, result.isValid());
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenPaymentTermsIsCaseInsensitive")
         void shouldReturnOk_whenPaymentTermsIsCaseInsensitive() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "net_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "net_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
+            assertEquals(true, result.isValid());
         }
 
         @Test
-        @DisplayName("shouldReturnInvalidCorporateData_whenProductIsInactive")
-        void shouldReturnInvalidCorporateData_whenProductIsInactive() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+        @DisplayName("shouldReturnOutOfStock_whenProductIsInactive")
+        void shouldReturnOutOfStock_whenProductIsInactive() {
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(false);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
+            assertEquals(false, result.isValid());
+            assertEquals(true, result.getErrors().contains(OrderError.OUT_OF_STOCK.toString()));
         }
 
         @Test
         @DisplayName("shouldReturnCreditLimitExceeded_whenOrderTotalExceedsMaxCreditLimit")
         void shouldReturnCreditLimitExceeded_whenOrderTotalExceedsMaxCreditLimit() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, new BigDecimal("100001"));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertFalse(result.isValid());
-            assertTrue(result.getErrors().contains(OrderError.CREDIT_LIMIT_EXCEEDED.toString()));
+            assertEquals(false, result.isValid());
+            assertEquals(true, result.getErrors().contains(OrderError.CREDIT_LIMIT_EXCEEDED.toString()));
         }
 
         @Test
         @DisplayName("shouldRequireHumanReview_whenOrderTotalEqualsMaxCreditLimit")
         void shouldRequireHumanReview_whenOrderTotalEqualsMaxCreditLimit() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, new BigDecimal("100000"));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
-            assertTrue(result.isHumanReviewRequired());
+            assertEquals(true, result.isValid());
+            assertEquals(true, result.isHumanReviewRequired());
         }
 
         @Test
         @DisplayName("shouldRequireHumanReview_whenOrderTotalExceedsHighValueThreshold")
         void shouldRequireHumanReview_whenOrderTotalExceedsHighValueThreshold() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, new BigDecimal("50001"));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
-            assertTrue(result.isHumanReviewRequired());
+            assertEquals(true, result.isValid());
+            assertEquals(true, result.isHumanReviewRequired());
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenOrderTotalEqualsHighValueThreshold")
         void shouldReturnOk_whenOrderTotalEqualsHighValueThreshold() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, new BigDecimal("50000"));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
-            assertFalse(result.isHumanReviewRequired());
+            assertEquals(true, result.isValid());
+            assertEquals(false, result.isHumanReviewRequired());
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenOrderTotalIsBelowHighValueThreshold")
         void shouldReturnOk_whenOrderTotalIsBelowHighValueThreshold() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, new BigDecimal("49999"));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
-            assertFalse(result.isHumanReviewRequired());
+            assertEquals(true, result.isValid());
+            assertEquals(false, result.isHumanReviewRequired());
         }
 
         @Test
         @DisplayName("shouldReturnOk_whenAllValidationsPass")
         void shouldReturnOk_whenAllValidationsPass() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, new BigDecimal("10000"));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertTrue(result.isValid());
-            assertFalse(result.isHumanReviewRequired());
+            assertEquals(true, result.isValid());
+            assertEquals(false, result.isHumanReviewRequired());
         }
     }
 
@@ -342,14 +344,14 @@ class CorporateProductValidationTest {
         @DisplayName("shouldApplyVolumeDiscount_whenQuantityExceedsThresholdWithSingleBlock")
         void shouldApplyVolumeDiscount_whenQuantityExceedsThresholdWithSingleBlock() {
             BigDecimal price = BigDecimal.valueOf(10.00);
-            OrderItem item = createOrderItem(150, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(150, price, createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Order order = createOrder(item, BigDecimal.valueOf(1500.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
-            assertTrue(result.isProcessed());
-            assertTrue(item.metadata().containsKey("discountAmount"));
+            assertEquals(true, result.isProcessed());
+            assertEquals(true, item.metadata().containsKey("discountAmount"));
             BigDecimal discountAmount = (BigDecimal) item.metadata().get("discountAmount");
             BigDecimal expectedDiscount = price
                     .multiply(BigDecimal.valueOf(100))
@@ -361,28 +363,28 @@ class CorporateProductValidationTest {
         @DisplayName("shouldNotApplyVolumeDiscount_whenQuantityIsBelowThreshold")
         void shouldNotApplyVolumeDiscount_whenQuantityIsBelowThreshold() {
             BigDecimal price = BigDecimal.valueOf(10.00);
-            OrderItem item = createOrderItem(50, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(50, price, createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Order order = createOrder(item, BigDecimal.valueOf(500.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
-            assertTrue(result.isProcessed());
-            assertFalse(item.metadata().containsKey("discountAmount"));
+            assertEquals(true, result.isProcessed());
+            assertEquals(false, item.metadata().containsKey("discountAmount"));
         }
 
         @Test
         @DisplayName("shouldApplyVolumeDiscount_whenQuantityEqualsThreshold")
         void shouldApplyVolumeDiscount_whenQuantityEqualsThreshold() {
             BigDecimal price = BigDecimal.valueOf(10.00);
-            OrderItem item = createOrderItem(100, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(100, price, createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
-            assertTrue(result.isProcessed());
-            assertTrue(item.metadata().containsKey("discountAmount"));
+            assertEquals(true, result.isProcessed());
+            assertEquals(true, item.metadata().containsKey("discountAmount"));
             BigDecimal discountAmount = (BigDecimal) item.metadata().get("discountAmount");
             BigDecimal expectedDiscount = price
                     .multiply(BigDecimal.valueOf(100))
@@ -394,13 +396,13 @@ class CorporateProductValidationTest {
         @DisplayName("shouldCalculateDiscountCorrectly_whenQuantityHasTwoBlocks")
         void shouldCalculateDiscountCorrectly_whenQuantityHasTwoBlocks() {
             BigDecimal price = BigDecimal.valueOf(10.00);
-            OrderItem item = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Order order = createOrder(item, BigDecimal.valueOf(2500.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
-            assertTrue(result.isProcessed());
+            assertEquals(true, result.isProcessed());
             BigDecimal discountAmount = (BigDecimal) item.metadata().get("discountAmount");
             BigDecimal expectedDiscount = price
                     .multiply(BigDecimal.valueOf(200))
@@ -412,8 +414,8 @@ class CorporateProductValidationTest {
         @DisplayName("shouldApplyDiscountToAllCorporateItems_whenThresholdExceeded")
         void shouldApplyDiscountToAllCorporateItems_whenThresholdExceeded() {
             BigDecimal price = BigDecimal.valueOf(10.00);
-            OrderItem item1 = createOrderItem(150, price, createMetadata("12.345.678/0001-90", "NET_30"));
-            OrderItem item2 = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item1 = createOrderItem(150, price, createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
+            OrderItem item2 = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             List<OrderItem> items = List.of(item1, item2);
             Order order = createOrderWithMultipleItems(items, BigDecimal.valueOf(4000.00));
             Product product = createProduct(true);
@@ -421,8 +423,8 @@ class CorporateProductValidationTest {
             corporateItemHandler.process(item1, product, order);
             corporateItemHandler.process(item2, product, order);
 
-            assertTrue(item1.metadata().containsKey("discountAmount"));
-            assertTrue(item2.metadata().containsKey("discountAmount"));
+            assertEquals(true, item1.metadata().containsKey("discountAmount"));
+            assertEquals(true, item2.metadata().containsKey("discountAmount"));
             BigDecimal discount1 = (BigDecimal) item1.metadata().get("discountAmount");
             BigDecimal discount2 = (BigDecimal) item2.metadata().get("discountAmount");
             BigDecimal expectedDiscount1 = price
@@ -438,35 +440,35 @@ class CorporateProductValidationTest {
         @Test
         @DisplayName("shouldConfigurePaymentTermsInMetadata")
         void shouldConfigurePaymentTermsInMetadata() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_60"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_60", "123456789"));
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
-            assertTrue(result.isProcessed());
-            assertTrue(item.metadata().containsKey("paymentTerms"));
+            assertEquals(true, result.isProcessed());
+            assertEquals(true, item.metadata().containsKey("paymentTerms"));
             assertEquals("NET_60", item.metadata().get("paymentTerms"));
         }
 
         @Test
         @DisplayName("shouldProcessSuccessfully_whenAllConditionsMet")
         void shouldProcessSuccessfully_whenAllConditionsMet() {
-            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
             Product product = createProduct(true);
 
             OrderProcessResult result = corporateItemHandler.process(item, product, order);
 
-            assertTrue(result.isProcessed());
-            assertTrue(item.metadata().containsKey("paymentTerms"));
+            assertEquals(true, result.isProcessed());
+            assertEquals(true, item.metadata().containsKey("paymentTerms"));
         }
 
         @Test
         @DisplayName("shouldOnlyCountCorporateItemsForVolumeDiscount")
         void shouldOnlyCountCorporateItemsForVolumeDiscount() {
             BigDecimal price = BigDecimal.valueOf(10.00);
-            OrderItem corporateItem = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30"));
+            OrderItem corporateItem = createOrderItem(250, price, createMetadata("12.345.678/0001-90", "NET_30", "123456789"));
             OrderItem physicalItem = OrderItem.builder()
                     .productId(UUID.randomUUID())
                     .quantity(500)
@@ -480,8 +482,8 @@ class CorporateProductValidationTest {
 
             OrderProcessResult result = corporateItemHandler.process(corporateItem, product, order);
 
-            assertTrue(result.isProcessed());
-            assertTrue(corporateItem.metadata().containsKey("discountAmount"));
+            assertEquals(true, result.isProcessed());
+            assertEquals(true, corporateItem.metadata().containsKey("discountAmount"));
             BigDecimal discountAmount = (BigDecimal) corporateItem.metadata().get("discountAmount");
             BigDecimal expectedDiscount = price
                     .multiply(BigDecimal.valueOf(200))
