@@ -134,16 +134,19 @@ class CorporateProductValidationTest {
         }
 
         @Test
-        @DisplayName("shouldReturnInvalidCorporateData_whenPaymentTermsIsMissing")
-        void shouldReturnInvalidCorporateData_whenPaymentTermsIsMissing() {
+        @DisplayName("shouldUseDefaultPaymentTerms_whenPaymentTermsIsMissing")
+        void shouldUseDefaultPaymentTerms_whenPaymentTermsIsMissing() {
             OrderItem item = createOrderItem(1, BigDecimal.valueOf(1000.00), createMetadata("12.345.678/0001-90", null, "123456789"));
             Product product = createProduct(true);
             Order order = createOrder(item, BigDecimal.valueOf(1000.00));
 
             ValidationResult result = corporateItemHandler.validate(item, product, order);
 
-            assertEquals(false, result.isValid());
-            assertEquals(true, result.getErrors().contains(OrderError.INVALID_CORPORATE_DATA.toString()));
+            assertEquals(true, result.isValid());
+
+            corporateItemHandler.process(item, product, order);
+
+            assertEquals(true, item.metadata().containsKey("paymentTerms"));
         }
 
         @Test
