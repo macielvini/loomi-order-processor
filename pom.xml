@@ -10,9 +10,9 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.loomi</groupId>
-	<artifactId>order_processor</artifactId>
+	<artifactId>order</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>order_processor</name>
+	<name>order</name>
 	<description>Demo project for Spring Boot</description>
 	<url />
 	<licenses>

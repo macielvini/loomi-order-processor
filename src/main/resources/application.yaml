@@ -1,9 +1,9 @@
 spring:
   application:
-    name: order_processor
+    name: order
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/order_processor
+    url: jdbc:postgresql://localhost:5432/order
     username: appuser
     password: apppass
 

@@ -1,0 +1,43 @@
+package com.loomi.order.app.service.order.handler;
+
+import java.math.BigDecimal;
+
+import org.springframework.stereotype.Service;
+
+import com.loomi.order.app.config.OrderProcessingConfig;
+import com.loomi.order.domain.order.dto.OrderProcessResult;
+import com.loomi.order.domain.order.entity.Order;
+import com.loomi.order.domain.order.valueobject.OrderError;
+import com.loomi.order.domain.product.dto.ValidationResult;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class HighValueOrderHandler implements OrderHandler {
+
+    private final OrderProcessingConfig config;
+
+    @Override
+    public ValidationResult validate(Order order) {
+        if (order.totalAmount() == null) {
+            log.error("Order {} has null totalAmount", order.id());
+            return ValidationResult.fail(OrderError.INTERNAL_ERROR.toString());
+        }
+
+        BigDecimal highValueThreshold = config.getHighValueThreshold();
+        if (order.totalAmount().compareTo(highValueThreshold) > 0) {
+            log.info("Order {} is a high-value order: totalAmount={}", order.id(), order.totalAmount());
+        }
+
+        return ValidationResult.ok();
+    }
+
+    @Override
+    public OrderProcessResult process(Order order) {
+        return OrderProcessResult.ok();
+    }
+}
+
