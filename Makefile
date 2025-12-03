@@ -1,4 +1,4 @@
-APP_NAME=order_processor
+APP_NAME=order
 DOCKER_COMPOSE=docker compose
 
 -include .env
@@ -36,7 +36,7 @@ clean:
 
 db-migrate:
 	@echo ">>>> Make sure your variables are pointing to the correct database"
-	@SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/order_processor; \
+	@SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/order; \
 	echo "Current value: $$SPRING_DATASOURCE_URL"; \
 	echo "Do you want to continue? (y/n)"; \
 	read continue; \

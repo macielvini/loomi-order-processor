@@ -4,7 +4,7 @@
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"application":"${spring.application.name:-order_processor}"}</customFields>
+            <customFields>{"application":"${spring.application.name:-order}"}</customFields>
             <includeMdcKeyName>correlationId</includeMdcKeyName>
             <includeMdcKeyName>orderId</includeMdcKeyName>
             <includeMdcKeyName>customerId</includeMdcKeyName>
@@ -15,7 +15,7 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
-    <logger name="com.loomi.order_processor" level="${LOG_LEVEL:-INFO}"/>
+    <logger name="com.loomi.order" level="${LOG_LEVEL:-INFO}"/>
     <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="ERROR"/>
     <logger name="org.apache.kafka.common.metrics.Metrics" level="WARN"/>
     <logger name="org.apache.kafka.clients.admin.AdminClientConfig" level="ERROR"/>
